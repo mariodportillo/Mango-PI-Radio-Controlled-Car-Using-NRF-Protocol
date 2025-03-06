@@ -1,6 +1,7 @@
 ## Title of your project
 
 ## Team members
+Mario Portillo
 
 ## Project goals
 Short description of project idea and end goal you are aiming for.
