@@ -11,8 +11,8 @@ all: $(PROGRAM)
 # Flags for compile and link
 ARCH 	= -march=rv64im -mabi=lp64
 ASFLAGS = $(ARCH)
-CFLAGS 	= $(ARCH) -g -Og -I$$CS107E/include $$warn $$freestanding -fno-omit-frame-pointer -fstack-protector-strong
-LDFLAGS = -nostdlib -L$$CS107E/lib -T memmap.ld
+CFLAGS  = $(ARCH) -g -Og -I$$CS107E/include -Icode_extras -Icode_extras/mathlib -Wall -ffreestanding -funroll-loops -ffast-math
+LDFLAGS = -nostdlib -L../mario_lib -T memmap.ld
 LDLIBS 	= -lmango -lmango_gcc
 
 OBJECTS = $(addsuffix .o, $(basename $(SOURCES)))
@@ -24,7 +24,7 @@ OBJECTS = $(addsuffix .o, $(basename $(SOURCES)))
 	riscv64-unknown-elf-objcopy $< -O binary $@
 
 # Link program executable from all common objects
-%.elf: $(OBJECTS) libmymango.a
+%.elf: $(OBJECTS) ../mario_lib/libmymango.a
 	riscv64-unknown-elf-gcc $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 # Compile C source to object file
