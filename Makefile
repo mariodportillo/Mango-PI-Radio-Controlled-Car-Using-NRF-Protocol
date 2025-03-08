@@ -1,37 +1,39 @@
 # Sample makefile for project
-# Builds "myprogram.bin" from myprogram.c (edit PROGRAM to change)
-# Additional source file(s) mymodule.c (edit SOURCES to change)
-# Link against your libmango + reference libmango (edit LDLIBS, LDFLAGS to change)
+# Builds "myprogram.bin" from myprogram.c
+# Additional source file(s): mymodule.c
+# Links against libmango + mathlib
 
 PROGRAM = myprogram.bin
-SOURCES = $(PROGRAM:.bin=.c) mymodule.c
+SOURCES = myprogram.c mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c
 
 all: $(PROGRAM)
 
 # Flags for compile and link
-ARCH 	= -march=rv64im -mabi=lp64
+ARCH    = -march=rv64im -mabi=lp64
 ASFLAGS = $(ARCH)
 CFLAGS  = $(ARCH) -g -Og -I$$CS107E/include -Icode_extras -Icode_extras/mathlib -Wall -ffreestanding -funroll-loops -ffast-math
-LDFLAGS = -nostdlib -L../mario_lib -T memmap.ld
-LDLIBS 	= -lmango -lmango_gcc
+LDFLAGS = -nostdlib -L$$CS107E/lib -Lcode_extras/mathlib -L mario_lib -T memmap.ld
+LDLIBS  = -lmango -lmango_gcc -lm   # Add -lm for math functions
 
-OBJECTS = $(addsuffix .o, $(basename $(SOURCES)))
+OBJECTS = $(addsuffix .o, $(basename $(SOURCES))) code_extras/mathlib/math_float.o
 
-# Rules and recipes for all build steps
-
-# Extract raw binary from elf executable
+# Extract raw binary from ELF executable
 %.bin: %.elf
 	riscv64-unknown-elf-objcopy $< -O binary $@
 
-# Link program executable from all common objects
-%.elf: $(OBJECTS) ../mario_lib/libmymango.a
+# Link program executable from all object files
+%.elf: $(OBJECTS) mario_lib/libmymango.a
 	riscv64-unknown-elf-gcc $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-# Compile C source to object file
+# Compile C source files
 %.o: %.c
 	riscv64-unknown-elf-gcc $(CFLAGS) -c $< -o $@
 
-# Assemble asm source to object file
+# Compile mathlib (ensure math_float.o is built)
+code_extras/mathlib/math_float.o: code_extras/mathlib/math_float.c
+	riscv64-unknown-elf-gcc $(CFLAGS) -c $< -o $@
+
+# Assemble asm source files
 %.o: %.s
 	riscv64-unknown-elf-as $(ASFLAGS) $< -o $@
 
@@ -41,20 +43,19 @@ run: $(PROGRAM)
 
 # Remove all build products
 clean:
-	rm -f *.o *.bin *.elf *.list *~
+	rm -f *.o *.bin *.elf *.list *~ code_extras/mathlib/math_float.o
 
-# this rule will provide better error message when
-# a source file cannot be found (missing, misnamed)
+# Error message if a source file is missing
 $(SOURCES):
 	$(error cannot find source file `$@` needed for build)
 
 libmymango.a:
-	$(error cannot find libmymango.a Change to mylib directory to build, then copy here)
+	$(error cannot find libmymango.a. Change to mylib directory to build, then copy here)
 
 .PHONY: all clean run
 .PRECIOUS: %.elf %.o
 
-# disable built-in rules (they are not used)
+# Disable built-in rules
 .SUFFIXES:
 
 export warn = -Wall -Wpointer-arith -Wwrite-strings -Werror \
