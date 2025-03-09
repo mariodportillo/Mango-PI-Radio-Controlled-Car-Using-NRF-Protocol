@@ -1,6 +1,22 @@
 #ifndef NRF_H__
 #define NRF_H__
 
+/**
+ * @file nrf.h
+ * Header file for nRF24L01 communication module for Mango Pi.
+ * 
+ * This file contains function declarations and documentation for configuring 
+ * and communicating with the nRF24L01 wireless transceiver using SPI. 
+ * The module supports both transmission (TX) and reception (RX) modes, 
+ * register manipulation, and data transfer operations.
+ * 
+ * This module was inspired by ControllerTechs.com's NRF24L01.c module for an STM 32 Microcontroller
+ * 
+ * Authors: Sahan Samarakoon and Mario Portillo
+ * Date: 9th March 2025
+ */
+
+
 #include <stdint.h>
 /*
  * Enables the nRF24L01 device by setting the CE pin high.
@@ -72,11 +88,56 @@ void nrf24_init();
  */
 void nrf24_set_tx_mode(uint8_t *address, uint8_t channel);  // Configure as a transmitter
 
-
+/**
+ * Transmits a 32-byte payload using the nRF24L01 device.
+ *
+ * @param data Pointer to the 32-byte payload to be transmitted.
+ * @return 1 if the transmission is successful; 0 otherwise.
+ */
 uint8_t nrf24_transmit(uint8_t *data);
 
+/**
+ * Configures the nRF24L01 as a receiver.
+ *
+ * @param address Pointer to the 5-byte address for RX data pipe 1.
+ * @param channel The channel number to configure for receiving data.
+ */
+void nrf24_set_rx_mode(uint8_t *address, uint8_t channel);
 
-void nrf24_set_rx_mode();  // Configure as a receiver
+
+/**
+ * Checks if data is available in the RX FIFO for a specific data pipe.
+ *
+ * @param pipenum The RX data pipe number to check (valid range: 0-5).
+ * @return 1 if data is available in the specified data pipe; 0 otherwise.
+ */
+uint8_t is_data_available(int pipenum);
+
+
+/**
+ * Receives a 32-byte payload from the RX FIFO and copies it to the provided buffer.
+ *
+ * @param data Pointer to the buffer where the received payload will be stored.
+ */
+void nrf24_receive(uint8_t *data);
+
+
+
+/**
+ * Resets specific registers or the entire nRF24L01+ device to default settings.
+ *
+ * This function resets either individual registers (e.g., STATUS, FIFO_STATUS) or the entire
+ * nRF24L01 device based on the provided parameter. To reset the entire device, pass `0` as the 
+ * parameter. The reset operation sets registers to their default values as per the datasheet.
+ *
+ * @param REG The register to reset:
+ *            - Pass `STATUS` to reset the STATUS register (default: 0x00).
+ *            - Pass `FIFO_STATUS` to reset the FIFO_STATUS register (default: 0x11).
+ *            - Pass `0` to reset the entire nRF24L01 device.
+ */
+void nrf24_reset(uint8_t reg);
+
+
 
 enum REGISTERS {
     CONFIG = 0x00,

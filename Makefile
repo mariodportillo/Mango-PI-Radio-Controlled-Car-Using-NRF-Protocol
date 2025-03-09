@@ -5,10 +5,12 @@
 
 RUN_PROGRAM = myprogram.bin
 TEST_PROGRAM = test_nrf.bin
+TRANSMISSION_PROGRAM = test_transmitter.bin
+RECEIVER_PROGRAM = test_receiver.bin
 MY_MODULE_SOURCES = mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c nrf.c code_extras/mathlib/math_float.c
 
 
-PROGRAMS = $(RUN_PROGRAM) $(TEST_PROGRAM)
+PROGRAMS = $(RUN_PROGRAM) $(TEST_PROGRAM) $(TRANSMISSION_PROGRAM) $(RECEIVER_PROGRAM)
 all: $(PROGRAMS)
 
 # Flags for compile and link
@@ -47,6 +49,13 @@ run: $(RUN_PROGRAM)
 
 # Build and run the test binary
 test: $(TEST_PROGRAM)
+	mango-run $<
+
+transmission: $(TRANSMISSION_PROGRAM)
+	mango-run $<
+
+
+receiver: $(RECEIVER_PROGRAM)
 	mango-run $<
 
 # Remove all build products
