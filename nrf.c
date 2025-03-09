@@ -36,7 +36,7 @@ void nrf24_write_byte_register(uint8_t reg, uint8_t data){
     *  we send 001A AAAA to activate W_REGISTER command
     *  The byte that follows immediately is written in the register address
     */
-   uint8_t tx_buf[2] = {reg | (1 << 5), data};
+   uint8_t tx_buf[2] = {reg | W_REGISTER, data};
    uint8_t rx_buf[2] = {0};
     //select_nrf_device();
     // NOTE: spi_transfer already selects the device by pulling down CSN low before communication
@@ -55,7 +55,7 @@ void nrf24_write_register(uint8_t reg, uint8_t *data, int size) {
     uint8_t rx_buf[1 + size]; // buffer for RX (for debugging purposes)
 
     // W_REGISTER command must be sent first
-    tx_buf[0] = reg | (1 << 5); 
+    tx_buf[0] = reg | W_REGISTER; 
     // Followed by the data
     memcpy(&tx_buf[1], data, size); 
     
@@ -71,8 +71,8 @@ void nrf24_read_register(uint8_t reg, uint8_t *data, int size){
     uint8_t rx_buf[1 + size];  
 
 
-    // R_REGISTER command (001A AAAA)  
-    tx_buf[0] = reg & 0x1F;
+    // R_REGISTER command (000A AAAA)  
+    tx_buf[0] = reg | R_REGISTER;
     memset(&tx_buf[1], 0xFF, size); // fill with dummy bytes to clock out data
 
     spi_transfer(tx_buf, rx_buf, 1 + size); 
@@ -129,16 +129,18 @@ void nrf24_set_tx_mode(uint8_t *address, uint8_t channel){
 
     // write the TX address
     nrf24_write_register(TX_ADDR, address, 5);
-
+   
     // power up the device
-    uint8_t config;
+    uint8_t config = 0;  
     nrf24_read_register(CONFIG, &config, 1);
-    config = config | (1 << 1);
+    config |= (1 << 1);  // set PWR_UP bit
+    config &= ~(1 << 0); // ensure PRIM_RX is 0 for TX mode
     nrf24_write_byte_register(CONFIG, config);
-
+    uint8_t test = 0;
+    nrf24_read_register(CONFIG, &test, 1);
     enable_nrf_device();
-
 }
+
 
 uint8_t nrf24_transmit(uint8_t *data){
     uint8_t tx_buf[1 + 32]; // command + 32-byte payload
@@ -155,6 +157,7 @@ uint8_t nrf24_transmit(uint8_t *data){
     // If transmission is successful, TX FIFO must be empty
     if ((fifo_status & (1 << 4)) && !(fifo_status & (1 << 3))){
         nrf24_send_cmd(FLUSH_TX);
+        disable_nrf_device();       // disable device to go Standby-1
         return 1;
     }
     // Failed to transmit

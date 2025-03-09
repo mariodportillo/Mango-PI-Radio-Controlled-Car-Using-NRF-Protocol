@@ -20,7 +20,7 @@ void disable_nrf_device();
 void select_nrf_device();
 
 /*
- * Deselects the nRF24L01+ device by setting the CSN pin high.
+ * Deselects the nRF24L01 device by setting the CSN pin high.
  */
 void deselect_nrf_device();
 
