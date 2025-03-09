@@ -6,18 +6,18 @@
 #include "pwm.h"
 #include "spi.h"
 
-// void main(void) {
-//     uart_init();
-//     say_hello("CS107e");
+void main(void) {
+    uart_init();
+    say_hello("CS107e");
 
-//     float val = cos(0);
-//     printf("This is the cos(0) = %d \n", (int)val);
+    float val = cos(0);
+    printf("This is the cos(0) = %d \n", (int)val);
 
-//     val = sin(1);
-//     printf("This is the sin(1) = %d \n", (int)val);
+    val = sin(1);
+    printf("This is the sin(1) = %d \n", (int)val);
 
-//     val = sqrt(25);
-//     printf("The  sqrt(25) = %d \n", (int)val);
+    val = sqrt(25);
+    printf("The  sqrt(25) = %d \n", (int)val);
 
-//     spi_init(0);
-// }
+    spi_init(0);
+}

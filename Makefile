@@ -3,11 +3,13 @@
 # Additional source file(s): mymodule.c
 # Links against libmango + mathlib
 
-PROGRAM = myprogram.bin
+RUN_PROGRAM = myprogram.bin
 TEST_PROGRAM = test_nrf.bin
-SOURCES = myprogram.c mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c nrf.c test_nrf.c
+SOURCES = mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c nrf.c
 
-all: $(PROGRAM)
+
+PROGRAMS = $(RUN_PROGRAM) $(TEST_PROGRAM)
+all: $(PROGRAMS)
 
 # Flags for compile and link
 ARCH    = -march=rv64im -mabi=lp64
@@ -39,7 +41,7 @@ code_extras/mathlib/math_float.o: code_extras/mathlib/math_float.c
 	riscv64-unknown-elf-as $(ASFLAGS) $< -o $@
 
 # Build and run the application binary
-run: $(PROGRAM)
+run: $(RUN_PROGRAM)
 	mango-run $<
 
 # Build and run the test binary

@@ -6,6 +6,10 @@
 #include "nrf.h"
 #include "uart.h"
 
+/*
+*  Address of the receive data pipe. 5 bytes wide.
+*  Must be passed as the MSB first.  Address saved in NRF 0xAABBCCDDEE
+*/ 
 uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
 
 void test_read_register(){

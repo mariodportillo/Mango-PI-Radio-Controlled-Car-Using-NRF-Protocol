@@ -62,7 +62,7 @@ void nrf24_send_cmd(uint8_t cmd);
 /*
  * Initializes the nRF24L01 device with default configuration.
  */
-void nrf_init();
+void nrf24_init();
 
 /**
  * Configures the nRF24L01 as a transmitter.
@@ -72,6 +72,8 @@ void nrf_init();
  */
 void nrf24_set_tx_mode(uint8_t *address, uint8_t channel);  // Configure as a transmitter
 
+
+uint8_t nrf24_transmit(uint8_t *data);
 
 
 void nrf24_set_rx_mode();  // Configure as a receiver
