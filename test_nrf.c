@@ -5,7 +5,7 @@
  */
 #include "nrf.h"
 #include "uart.h"
-
+#include "printf.h"
 /*
 *  Address of the receive data pipe. 5 bytes wide.
 *  Must be passed as the MSB first.  Address saved in NRF 0xAABBCCDDEE

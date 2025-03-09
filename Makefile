@@ -5,7 +5,7 @@
 
 RUN_PROGRAM = myprogram.bin
 TEST_PROGRAM = test_nrf.bin
-SOURCES = mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c nrf.c
+MY_MODULE_SOURCES = mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c nrf.c code_extras/mathlib/math_float.c
 
 
 PROGRAMS = $(RUN_PROGRAM) $(TEST_PROGRAM)
@@ -18,14 +18,15 @@ CFLAGS  = $(ARCH) -g -Og -I$$CS107E/include -Icode_extras -Icode_extras/mathlib 
 LDFLAGS = -nostdlib -L$$CS107E/lib -Lcode_extras/mathlib -L mario_lib -T memmap.ld
 LDLIBS  = -lmango -lmango_gcc -lm   # Add -lm for math functions
 
-OBJECTS = $(addsuffix .o, $(basename $(SOURCES))) code_extras/mathlib/math_float.o
+SOURCES = $(MY_MODULE_SOURCES)
+OBJECTS = $(addsuffix .o, $(basename $(SOURCES)))
 
 # Extract raw binary from ELF executable
 %.bin: %.elf
 	riscv64-unknown-elf-objcopy $< -O binary $@
 
 # Link program executable from all object files
-%.elf: $(OBJECTS) mario_lib/libmymango.a
+%.elf: $(OBJECTS) %.o
 	riscv64-unknown-elf-gcc $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 # Compile C source files
