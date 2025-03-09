@@ -4,7 +4,8 @@
 # Links against libmango + mathlib
 
 PROGRAM = myprogram.bin
-SOURCES = myprogram.c mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c
+TEST_PROGRAM = test_nrf.bin
+SOURCES = myprogram.c mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c nrf.c test_nrf.c
 
 all: $(PROGRAM)
 
@@ -39,6 +40,10 @@ code_extras/mathlib/math_float.o: code_extras/mathlib/math_float.c
 
 # Build and run the application binary
 run: $(PROGRAM)
+	mango-run $<
+
+# Build and run the test binary
+test: $(TEST_PROGRAM)
 	mango-run $<
 
 # Remove all build products
