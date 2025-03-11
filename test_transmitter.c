@@ -1,4 +1,3 @@
-
 /* File: test_transmitter.c
  * ---------------------------
  * ***** Compile and run this code on the transmitter  *****
@@ -7,33 +6,38 @@
 #include "uart.h"
 #include "printf.h"
 #include "timer.h"
-#include "spi_comm.h"
-
-
 
 uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
-uint8_t tx_data[] = "Hello World\n";
-
+uint8_t tx_on[] = "ON";
+uint8_t tx_off[] = "OFF";
+int led_state = 0; // track LED state
 
 void test_transmission(){
-    printf("Press 'q' to stop transmission.\n");
-
-    while (1) {  // Infinite loop for continuous transmission
-        if (nrf24_transmit(tx_data)) {
-            printf("Transmission successful!\n");
-        } else {
-            printf("Transmission failed, retrying...\n");
-        }
-        timer_delay_ms(1000); // Wait before retrying
+    printf("Press 'f' to toggle LED\n");
     
-        // Check for a key press
+    while (1) {
         if (uart_haschar()) {  
             char c = uart_getchar();  
             if (c == 'q') {  
                 printf("Transmission stopped by user.\n");
                 break;  
+            } else if (c == 'f') {  
+                // toggle LED state
+                led_state = !led_state;
+                if (led_state){
+                    uint8_t *message = tx_on;
+                }
+                else {
+                    uint8_t *message = tx_off;
+                }
+                if (nrf24_transmit(message)) {
+                    printf("Sent: %s\n", message);
+                } else {
+                    printf("Transmission failed, retrying...\n");
+                }
             }
         }
+        timer_delay_ms(500); // delay to avoid multiple triggers
     }    
 }
 
@@ -42,5 +46,4 @@ void main(void){
     nrf24_init();
     nrf24_set_tx_mode(tx_address, 10);
     test_transmission();
-
 }

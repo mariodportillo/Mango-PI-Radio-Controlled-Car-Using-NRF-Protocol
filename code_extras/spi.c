@@ -45,7 +45,7 @@ typedef union {
             uint32_t                : 1;
             uint32_t tx_ready       : 1;
             uint32_t tx_empty       : 1;
-            uint32_t tx_full        : 1;
+            uint32_t tx_full         : 1;
             uint32_t                : 1;
             uint32_t rx_overflow    : 1;
             uint32_t rx_underflow   : 1;
