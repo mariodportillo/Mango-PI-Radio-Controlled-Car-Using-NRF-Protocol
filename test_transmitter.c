@@ -7,6 +7,7 @@
 #include "uart.h"
 #include "printf.h"
 #include "timer.h"
+#include "spi_comm.h"
 
 
 

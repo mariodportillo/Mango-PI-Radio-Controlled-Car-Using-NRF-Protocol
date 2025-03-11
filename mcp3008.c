@@ -4,21 +4,6 @@
 #define CSN_NRF24    GPIO_PD10   // CS pin for nRF24L01
 #define CSN_MCP3008  GPIO_PD9    // CS pin for MCP3008
 
-void select_nrf24() {
-    gpio_write(CSN_NRF24, 0);  // Enable nRF
-    gpio_write(CSN_MCP3008, 1); // Disable MCP3008
-}
-
-void select_mcp3008() {
-    gpio_write(CSN_NRF24, 1);  // Disable nRF
-    gpio_write(CSN_MCP3008, 1); // Disable MCP3008
-    gpio_write(CSN_MCP3008, 0); // Enable MCP3008
-}
-
-void deselect_all() {
-    gpio_write(CSN_NRF24, 1);
-    gpio_write(CSN_MCP3008, 1);
-}
 
 // Read ADC from MCP3008 (channel 0)
 int mcp3008_read_channel(int channel) {

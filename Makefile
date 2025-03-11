@@ -7,7 +7,7 @@ RUN_PROGRAM = myprogram.bin
 TEST_PROGRAM = test_nrf.bin
 TRANSMISSION_PROGRAM = test_transmitter.bin
 RECEIVER_PROGRAM = test_receiver.bin
-MY_MODULE_SOURCES = mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c nrf.c code_extras/mathlib/math_float.c
+MY_MODULE_SOURCES = mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c nrf.c code_extras/mathlib/math_float.c spi_comm.c
 
 
 PROGRAMS = $(RUN_PROGRAM) $(TEST_PROGRAM) $(TRANSMISSION_PROGRAM) $(RECEIVER_PROGRAM)

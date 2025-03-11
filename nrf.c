@@ -5,11 +5,10 @@
 #include "strings.h"
 #include "printf.h"
 #include "timer.h"
+#include "spi_comm.h"
 
 // define the chip enable to enable the NRF device
 #define NRF24_CE_PIN GPIO_PD15
-// chip select pin for SPI 
-#define NRF_24_CSN_PIN GPIO_PD10
 
 
 void enable_nrf_device(){
@@ -21,15 +20,6 @@ void disable_nrf_device(){
     gpio_write(NRF24_CE_PIN, 0);
 }
 
-void select_nrf_device(){
-    gpio_write(NRF_24_CSN_PIN, 0);
-}
-
-void deselect_nrf_device(){
-    gpio_write(NRF_24_CSN_PIN, 1);
-}
-
-
 void nrf24_write_byte_register(uint8_t reg, uint8_t data){
     
     /* To write to a register of address A AAAA
@@ -40,7 +30,8 @@ void nrf24_write_byte_register(uint8_t reg, uint8_t data){
    uint8_t rx_buf[2] = {0};
     //select_nrf_device();
     // NOTE: spi_transfer already selects the device by pulling down CSN low before communication
-    spi_transfer(tx_buf, rx_buf, 2);    // sends 2 bytes
+
+    spi_transfer_device(tx_buf, rx_buf, 2, NRF_MODE);    // sends 2 bytes
     //deselect_nrf_device();
     
     // TODO: for debugging only. Pls remove
@@ -59,7 +50,7 @@ void nrf24_write_register(uint8_t reg, uint8_t *data, int size) {
     // Followed by the data
     memcpy(&tx_buf[1], data, size); 
     
-    spi_transfer(tx_buf, rx_buf, 1 + size); 
+    spi_transfer_device(tx_buf, rx_buf, 1 + size, NRF_MODE); 
     
 }
 
@@ -75,14 +66,14 @@ void nrf24_read_register(uint8_t reg, uint8_t *data, int size){
     tx_buf[0] = reg | R_REGISTER;
     memset(&tx_buf[1], 0xFF, size); // fill with dummy bytes to clock out data
 
-    spi_transfer(tx_buf, rx_buf, 1 + size); 
+    spi_transfer_device(tx_buf, rx_buf, 1 + size, NRF_MODE); 
     // array of received data (ignores the status byte)
     memcpy(data, &rx_buf[1], size);  
 }
 
 
 void nrf24_send_cmd(uint8_t cmd){
-    spi_transfer(&cmd, NULL, 1);
+    spi_transfer_device(&cmd, NULL, 1, NRF_MODE);
 }
 
 
@@ -145,7 +136,7 @@ uint8_t nrf24_transmit(uint8_t *data){
     tx_buf[0] = W_TX_PAYLOAD;
     memcpy(&tx_buf[1], data, 32); 
 
-    spi_transfer(tx_buf, NULL, 1 + 32); 
+    spi_transfer_device(tx_buf, NULL, 1 + 32, NRF_MODE); 
     
     // Testing the transmit status
     timer_delay_ms(1);
@@ -221,7 +212,7 @@ void nrf24_receive(uint8_t *data){
     tx_buf[0] = R_RX_PAYLOAD;
     memset(&tx_buf[1], 0xFF, 32); 
 
-    spi_transfer(tx_buf, rx_buf, 1 + 32); 
+    spi_transfer_device(tx_buf, rx_buf, 1 + 32, NRF_MODE); 
     memcpy(data, &rx_buf[1], 32);
     // Testing the transmit status
     timer_delay_ms(1);
