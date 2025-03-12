@@ -131,7 +131,7 @@ void nrf24_set_tx_mode(uint8_t *address, uint8_t channel){
 }
 
 
-uint8_t nrf24_transmit(uint8_t *data){
+uint8_t nrf24_transmit(const uint8_t *data){
     uint8_t tx_buf[1 + 32]; // command + 32-byte payload
     tx_buf[0] = W_TX_PAYLOAD;
     memcpy(&tx_buf[1], data, 32); 
