@@ -2,7 +2,7 @@
 #define SPI_COMM_H
 
 #define CSN_NRF24    GPIO_PD10   // CS pin for nRF24L01
-#define CSN_MCP3008  GPIO_PD9    // CS pin for MCP3008
+#define CSN_MCP3008  GPIO_PD17   // CS pin for MCP3008
 
 typedef enum {
     MCP3008_MODE = 0,
