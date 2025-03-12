@@ -22,20 +22,14 @@ void deselect_all() {
 // NRF is mode 1
 // MCP is mode 0
 
-void spi_transfer_device(uint8_t *tx, uint8_t *rx, int len, unsigned int mode){
-    if(mode > 1 || mode < 0){
-         printf("INCORRECT mode. Can only choose a mode between 0 and 1");
-	 return;
-    }
-
-    if(mode){
-	    select_nrf24();
+void spi_transfer_device(uint8_t *tx, uint8_t *rx, int len, spi_mode mode){
+    if(mode == NRF_MODE){
+	select_nrf24();
     	spi_transfer(tx, rx, len);
         deselect_all();
-    }else if(mode == 0){
+    }else if(mode == MCP3008_MODE){
        select_mcp3008();
        spi_transfer(tx, rx, len); 
        deselect_all();
     }
-
 }

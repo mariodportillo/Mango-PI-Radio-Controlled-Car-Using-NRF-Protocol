@@ -24,12 +24,16 @@ void test_transmission(){
             } else if (c == 'f') {  
                 // toggle LED state
                 led_state = !led_state;
+                
+                uint8_t *message = NULL;  
+                
                 if (led_state){
-                    uint8_t *message = tx_on;
+                    message = tx_on;
                 }
                 else {
-                    uint8_t *message = tx_off;
+                    message = tx_off;
                 }
+
                 if (nrf24_transmit(message)) {
                     printf("Sent: %s\n", message);
                 } else {
