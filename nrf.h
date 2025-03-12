@@ -94,7 +94,7 @@ void nrf24_set_tx_mode(uint8_t *address, uint8_t channel);  // Configure as a tr
  * @param data Pointer to the 32-byte payload to be transmitted.
  * @return 1 if the transmission is successful; 0 otherwise.
  */
-uint8_t nrf24_transmit(uint8_t *data);
+uint8_t nrf24_transmit(const uint8_t *data);
 
 /**
  * Configures the nRF24L01 as a receiver.

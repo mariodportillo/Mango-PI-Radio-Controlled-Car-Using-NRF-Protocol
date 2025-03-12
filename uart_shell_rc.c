@@ -3,13 +3,16 @@
  * Mario Portillo 
  * CS 107e
  */
-#include "shell.h"
 #include "shell_commands.h"
 #include "uart.h"
 #include "strings.h"
 #include "malloc.h" 
 #include "mango.h"
 #include "ps2_keys.h"
+#include "nrf.h"
+#include "uart_shell_rc.h"
+#include "timer.h"
+#include "strings.h"
 
 #define LINE_LEN 80
 
@@ -17,6 +20,8 @@
 static struct {
     input_fn_t shell_read;
     formatted_fn_t shell_printf;
+    int transmitInit;
+    int recieverInit; 
 } module;
 
 
@@ -35,6 +40,111 @@ static struct {
 // Your graders thank you in advance for taking this care!
 
 
+
+int tmInit(){
+    nrf24_init();
+    module.transmitInit = 1; 
+    uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
+    nrf24_set_tx_mode(tx_address, 10);
+    module.shell_printf("Succesfully initialized mango pi to be a transmitter.\n");
+    return 0; 
+}
+
+static char* fixMessage(int argc, const char *argv[]){
+    if (argc <= 1) return NULL;
+    int bufSize = LINE_LEN - strlen(argv[0]); 
+
+    char *resultString = malloc(LINE_LEN);
+    resultString[0] = '\0';
+
+    for(int i = 1; i < argc; i++){
+	strlcat(resultString, argv[i], bufSize);
+	if (i < argc - 1) {
+            strlcat(resultString, " ", bufSize);  // Add space between words
+        }
+    }
+
+    return resultString;
+}
+
+int transmit_message(int argc, const char *argv[]){
+    if (module.transmitInit == 0){
+	module.shell_printf("error: Need to init transmit before messaging. \n");
+	return -1;
+    }
+
+    if (argc < 2){
+	module.shell_printf("error: Transmit Message requires a message. \n");
+    	return -1; 
+    }
+    char *fullString = fixMessage(argc, argv);
+    
+    if(strlen(fullString) > 31){
+	module.shell_printf("error: Message is too long. You can only send 31 chars.\n");
+    	return -1;
+    }
+
+    const uint8_t *message = (const uint8_t *)fullString; 
+    
+    if(message == NULL){
+	module.shell_printf("error: No message was found\n");
+    	return -1;
+    }
+
+    unsigned long startTime = timer_get_ticks();
+    unsigned long endTime = 10000 * 24000; //convert milliseconds to clock ticks 
+
+    while(!nrf24_transmit(message)){
+	if(timer_get_ticks() - startTime < endTime){
+	    module.shell_printf("Transmission failed.\n");
+	    return -1;
+	}
+    }
+
+    module.shell_printf("Sent: %s\n", message);
+
+    return 0; 
+}
+
+
+int rcInit(){
+    uint8_t rx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};    
+    nrf24_init();
+    nrf24_set_rx_mode(rx_address, 10);
+    module.shell_printf("Succesfully initialized mango pi to be a reciever.\n");
+    module.recieverInit = 1; 
+    return 1; 
+}
+
+int reciever_mode(){
+    if(module.recieverInit == 0){
+	module.shell_printf("error: Need to init reciever. \n");
+	return -1;
+    }
+
+    uint8_t rx_data[32];
+    unsigned long startTime = timer_get_ticks();
+    unsigned long endTime = 10000 * 24000; //convert milliseconds to clock ticks 
+    unsigned long lastPrint = startTime;
+
+    while(timer_get_ticks() - startTime < endTime){
+    	if (is_data_available(1)){
+	      nrf24_receive(rx_data);
+	      module.shell_printf("Received: %s\n", rx_data);
+
+	      return 0;
+	}
+
+	if(timer_get_ticks() - lastPrint >= 1000 * 24000){
+    	   module.shell_printf("Waiting for data...\n");
+	   lastPrint = timer_get_ticks();
+	}
+    }
+
+    module.shell_printf("No messages were recieved.\n");
+    return -1;
+}
+
 static const command_t commands[] = {
     {"help",  "help [cmd]",  "print command usage and description", cmd_help},
     {"echo",  "echo [args]", "print arguments", cmd_echo},
@@ -42,6 +152,14 @@ static const command_t commands[] = {
     {"reboot", "reboot",     "reboot the Mango Pi", cmd_reboot},
     {"peek", "peek [addr]",  "print contents of memory at address", cmd_peek},
     {"poke", "poke [addr] [val]",  "store value into memory at address", cmd_poke},
+    {"transmit", "tm [message]", "transmits the message over radio waves to any NRF listening", transmit_message}, 
+    {"tm", "tm [message]", "transmits the message over radio waves to any NRF listening", transmit_message},
+    {"tmInit", "tmInit",  "initializes this mango pi to be a reciever", tmInit},
+    {"ti", "tmInit",  "initializes this mango pi to be a reciever", tmInit},
+    {"recieve", "rc", "enters reciever mode and will wait 10 seconds for a message to come through", reciever_mode},
+    {"rc", "rc", "enters reciever mode and will wait 10 seconds for a message to come through", reciever_mode},
+    {"rcInit", "rcInit", "this will initialize the NRF on mangoPi to be a receiver", rcInit}, 
+    {"ri", "rcInit", "this will initialize the NRF on mangoPi to be a receiver", rcInit} 
 };
 
 
@@ -154,6 +272,10 @@ int cmd_help(int argc, const char *argv[]) {
        module.shell_printf("reboot             reboot the Mango Pi\n");
        module.shell_printf("peek [addr]        print contents of memory at address\n");
        module.shell_printf("poke [addr] [val]  store value into memory at address\n");
+       module.shell_printf("tmInit             initializes this mango pi to be a reciever\n");
+       module.shell_printf("tm                 transmits the message over radio waves to any NRF listening\n"); 
+       module.shell_printf("rcInit             initializes this mango pi to be reciever\n");
+       module.shell_printf("rc                 enters reciever mode and will wait 10 seconds for a message to come through\n");
        return 0;
     }
 
@@ -172,6 +294,18 @@ int cmd_help(int argc, const char *argv[]) {
     }else if(strcmp(argv[1], "poke") == 0){
        module.shell_printf("poke [addr] [val]  store value into memory at address\n");
        return 0; 
+    }else if(strcmp(argv[1], "tmInit") == 0 || strcmp(argv[1], "ti") == 0){
+       module.shell_printf("tmInit             initializes this mango pi to be a transmitter\n");
+       return 0; 
+    }else if(strcmp(argv[1], "tm") == 0 || strcmp(argv[1], "transmit") == 0){
+       module.shell_printf("tm                 transmits the message over radio waves to any nrf listening\n");
+       return 0;
+    }else if(strcmp(argv[1], "rc") == 0 || strcmp(argv[1], "recieve") == 0){
+       module.shell_printf("rc                 enters reciever mode and will wait 10 seconds for a message to come through\n");
+       return 0;
+    }else if((strcmp(argv[1], "rcInit") == 0 || strcmp(argv[1], "ri") == 0)){
+       module.shell_printf("rcInit             initializes this mango pi to be reciever\n");
+       return 0;
     }
 
     module.shell_printf("error: no such command '%s'\n", argv[1]);
@@ -186,6 +320,8 @@ int cmd_clear(int argc, const char* argv[]) {
 void shell_init(input_fn_t read_fn, formatted_fn_t print_fn) {
     module.shell_read = read_fn;
     module.shell_printf = print_fn;
+    module.transmitInit = 0;
+    module.recieverInit = 0;
 }
 
 void shell_bell(void) {

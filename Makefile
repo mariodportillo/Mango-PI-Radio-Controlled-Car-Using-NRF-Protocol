@@ -7,16 +7,19 @@ RUN_PROGRAM = myprogram.bin
 TEST_PROGRAM = test_nrf.bin
 TRANSMISSION_PROGRAM = test_transmitter.bin
 RECEIVER_PROGRAM = test_receiver.bin
-MY_MODULE_SOURCES = mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c nrf.c code_extras/mathlib/math_float.c spi_comm.c
+SHELL_PROGRAM = test_RCshell.bin
+
+MY_MODULE_SOURCES = mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c \
+		    nrf.c code_extras/mathlib/math_float.c spi_comm.c motor.c uart_shell_rc
 
 
-PROGRAMS = $(RUN_PROGRAM) $(TEST_PROGRAM) $(TRANSMISSION_PROGRAM) $(RECEIVER_PROGRAM)
+PROGRAMS = $(RUN_PROGRAM) $(TEST_PROGRAM) $(TRANSMISSION_PROGRAM) $(RECEIVER_PROGRAM) $(SHELL_PROGRAM)
 all: $(PROGRAMS)
 
 # Flags for compile and link
 ARCH    = -march=rv64im -mabi=lp64
 ASFLAGS = $(ARCH)
-CFLAGS  = $(ARCH) -g -Og -I$$CS107E/include -Icode_extras -Icode_extras/mathlib -Wall -ffreestanding -funroll-loops -ffast-math
+CFLAGS  = $(ARCH) -g -Og -I$$CS107E/include -Icode_extras -Icode_extras/mathlib -Wall -ffreestanding -funroll-loops -ffast-math -fstrict-volatile-bitfields
 LDFLAGS = -nostdlib -L$$CS107E/lib -Lcode_extras/mathlib -L mario_lib -T memmap.ld
 LDLIBS  = -lmango -lmango_gcc -lm   # Add -lm for math functions
 
@@ -56,6 +59,8 @@ transmission: $(TRANSMISSION_PROGRAM)
 
 
 receiver: $(RECEIVER_PROGRAM)
+	mango-run $<
+shell: $(SHELL_PROGRAM)
 	mango-run $<
 
 # Remove all build products
