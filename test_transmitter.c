@@ -24,13 +24,9 @@ void test_transmission(){
             } else if (c == 'f') {  
                 // toggle LED state
                 led_state = !led_state;
-<<<<<<< HEAD
-                uint8_t *message = 0;
-=======
                 
                 uint8_t *message = NULL;  
                 
->>>>>>> 655914633900c759d23349944d3932161d8790ba
                 if (led_state){
                     message = tx_on;
                 }

@@ -39,17 +39,47 @@ static struct {
 //
 // Your graders thank you in advance for taking this care!
 
+//2 modes
+//RX -> TX == 0
+//TX <- RX == 1
+void switchNRF(int MODE){
+   if (MODE > 1 || MODE < 0){
+	return;
+   }
 
+   uint8_t address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
+   
+   if(MODE == 1){
+       nrf24_set_tx_mode(address, 10);
+       module.shell_printf("Succesfully switched to a Transmitter.\n");
+       module.transmitInit = 1;
+       module.recieverInit = 0;
+   }else if(MODE == 0){ 
+       nrf24_set_rx_mode(address, 10);
+       module.shell_printf("Succesfully Switched to a  Reciever.\n");
+       module.recieverInit = 1;
+       module.transmitInit = 0;
+   }
 
-int tmInit(){
+   return;
+}
+
+int tmInit(){ 
+    if(module.recieverInit == 1){
+	switchNRF(1); //TX <- RX == 1
+	return 0; 
+    }
+
     nrf24_init();
     module.transmitInit = 1; 
+
     uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
     nrf24_set_tx_mode(tx_address, 10);
     module.shell_printf("Succesfully initialized mango pi to be a transmitter.\n");
     return 0; 
 }
 
+//This below code is needed to fix the tokenized messages that might be passed in.
 static char* fixMessage(int argc, const char *argv[]){
     if (argc <= 1) return NULL;
     int bufSize = LINE_LEN - strlen(argv[0]); 
@@ -68,15 +98,17 @@ static char* fixMessage(int argc, const char *argv[]){
 }
 
 int transmit_message(int argc, const char *argv[]){
-    if (module.transmitInit == 0){
-	module.shell_printf("error: Need to init transmit before messaging. \n");
-	return -1;
+    if (module.transmitInit == 0 && module.recieverInit == 0){
+	tmInit();
+    }else if(module.transmitInit == 0 && module.recieverInit == 1){
+	switchNRF(1); //TX <- RX == 1
     }
 
     if (argc < 2){
 	module.shell_printf("error: Transmit Message requires a message. \n");
     	return -1; 
     }
+
     char *fullString = fixMessage(argc, argv);
     
     if(strlen(fullString) > 31){
@@ -97,10 +129,12 @@ int transmit_message(int argc, const char *argv[]){
     while(!nrf24_transmit(message)){
 	if(timer_get_ticks() - startTime < endTime){
 	    module.shell_printf("Transmission failed.\n");
+	    free(fullString);
 	    return -1;
 	}
     }
 
+    free(fullString);
     module.shell_printf("Sent: %s\n", message);
 
     return 0; 
@@ -108,18 +142,25 @@ int transmit_message(int argc, const char *argv[]){
 
 
 int rcInit(){
+    if(module.transmitInit == 1){
+	switchNRF(0);//RX -> TX == 0
+	return 1; 
+    }
+
     uint8_t rx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};    
     nrf24_init();
+
     nrf24_set_rx_mode(rx_address, 10);
     module.shell_printf("Succesfully initialized mango pi to be a reciever.\n");
     module.recieverInit = 1; 
-    return 1; 
+    return 1;
 }
 
 int reciever_mode(){
-    if(module.recieverInit == 0){
-	module.shell_printf("error: Need to init reciever. \n");
-	return -1;
+    if (module.transmitInit == 0 && module.recieverInit == 0){
+	rcInit();
+    }else if(module.transmitInit == 1 && module.recieverInit == 0){
+	switchNRF(0); //RX -> TX == 0
     }
 
     uint8_t rx_data[32];
