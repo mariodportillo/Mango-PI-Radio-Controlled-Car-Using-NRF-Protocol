@@ -66,9 +66,9 @@ void test_receiver_motor(){
      gpio_set_output(GPIO_PB2);  
      nrf24_set_rx_mode(rx_address, 10);
      
-     //test_receiver();
-     motor_init();
-     test_motor();
-     test_receiver_motor();
+     test_receiver();
+     //motor_init();
+     //test_motor();
+     //test_receiver_motor();
  }
  

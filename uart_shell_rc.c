@@ -50,11 +50,13 @@ void switchNRF(int MODE){
    uint8_t address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
    
    if(MODE == 1){
+       nrf24_init();
        nrf24_set_tx_mode(address, 10);
        module.shell_printf("Succesfully switched to a Transmitter.\n");
        module.transmitInit = 1;
        module.recieverInit = 0;
-   }else if(MODE == 0){ 
+   }else if(MODE == 0){
+       nrf24_init();
        nrf24_set_rx_mode(address, 10);
        module.shell_printf("Succesfully Switched to a  Reciever.\n");
        module.recieverInit = 1;

@@ -10,7 +10,7 @@ RECEIVER_PROGRAM = test_receiver.bin
 SHELL_PROGRAM = test_RCshell.bin
 
 MY_MODULE_SOURCES = mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c \
-		    nrf.c code_extras/mathlib/math_float.c spi_comm.c motor.c uart_shell_rc
+		    nrf.c code_extras/mathlib/math_float.c spi_comm.c motor.c mcp3008.c uart_shell_rc.c 
 
 
 PROGRAMS = $(RUN_PROGRAM) $(TEST_PROGRAM) $(TRANSMISSION_PROGRAM) $(RECEIVER_PROGRAM) $(SHELL_PROGRAM)
