@@ -83,10 +83,10 @@ void test_read_channel_mcp(){
 
 void main(void){
     uart_init();
-    //nrf24_init();
-    //nrf24_set_tx_mode(tx_address, 10);
-    spi_init(SPI_MODE_0);
-    test_read_channel_mcp();
-    //test_transmission_simple();
+    nrf24_init();
+    nrf24_set_tx_mode(tx_address, 10);
+    
+    //test_read_channel_mcp();
+    test_transmission_simple();
     //test_transmission();
 }

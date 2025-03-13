@@ -82,6 +82,8 @@ void nrf24_init(){
     spi_init(SPI_MODE_0);  // Configure SPI for nRF24L01
     disable_nrf_device();  // Disable NRF before configuration
 
+    gpio_set_output(CSN_NRF24); // set the Chip select as output
+
     nrf24_reset(0);         // reset all the registers before configuration
     nrf24_write_byte_register(CONFIG, 0);   // will be configured later
 
