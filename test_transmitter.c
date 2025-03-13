@@ -9,6 +9,7 @@
 #include "timer.h"
 #include "mcp3008.h"
 #include "spi.h"
+#include "motor.h"
 
 uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
 uint8_t tx_on[] = "ON";
@@ -76,10 +77,16 @@ void test_read_channel_mcp(){
 
   while(1){
 	value = mcp3008_read_channel(0);
-	printf("Current value: %d \n", value);
-    timer_delay_ms(100);
+	printf("Current value: %d \n", value); 
+	timer_delay_ms(100);
   }
 
+}
+
+void test_joystick_to_motor(){
+  while(1){
+     motor_control_from_joystick();
+  }
 }
 
 void main(void){
@@ -87,9 +94,11 @@ void main(void){
     //nrf24_init();
     spi_init(SPI_MODE_0);
     mcp3008_init();
+    motor_init();
     //nrf24_set_tx_mode(tx_address, 10);
     
-    test_read_channel_mcp();
+    //test_read_channel_mcp();
     //test_transmission_simple();
     //test_transmission();
+    test_joystick_to_motor();
 }

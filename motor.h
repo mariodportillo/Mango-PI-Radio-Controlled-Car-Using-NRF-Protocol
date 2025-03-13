@@ -9,9 +9,16 @@
 #define IN3_PIN GPIO_PB3  // Motor B direction
 #define IN4_PIN GPIO_PB4  
 
+#define X_CHANNEL 0
+#define Y_CHANNEL 1
+typedef enum {
+    MOVE_FORWARD = 0,
+    MOVE_BACKWARD = 1,
+    TURN_RIGHT = 2,
+    TURN_LEFT = 3,
+} motor_direction;
+
 void motor_init(void);
-static void motorA_set_direction(int dir);
-static void motorB_set_direction(int dir);
 
 // Below are controls the user can use to turn the wheels and
 // make the car move forward for a amount of time
