@@ -114,26 +114,26 @@ void motor_control_from_joystick(void) {
 
     int speed = 0;     //(joystick_value * 100) / 1023; // -> needs to be between 0 and 100%
     motor_direction cur_dir = MOVE_FORWARD; //
-    
-    if(y_value >= 550){ // this value should be tested.
-	//we should be moving forward
-	speed = ((512 - y_value)*100) / 512; // 512 = starting position
-	cur_dir = MOVE_FORWARD; 
+    int startingRange = 515; //these values can be adjusted
+    int noMotion = 30; // these values can be adjusted
 
-    }else if(y_value <= 550){ //these ranges need to be tested.
-	//we should be reversing
-	speed = ((y_value - 512)*100) / 512; // 512 = starting position
-	cur_dir = MOVE_BACKWARD;
+    if (y_value > startingRange + noMotion) {  // Moving forward
+    	speed = ((y_value - startingRange) * 100) / 511; //gives us a value between 0 and 100
+    	cur_dir = MOVE_BACKWARD;
 
-    }else if(x_value <= 550){
-	//we should be turning right
-	speed = ((x_value - 512)*100) / 512; // 512 = starting position	
-	cur_dir = TURN_RIGHT;
+    }else if (y_value < startingRange - noMotion) {  // Moving backward
+    	speed = ((startingRange - y_value) * 100) / 512;
+    	cur_dir = MOVE_FORWARD;
 
-    }else if(x_value >= 550){
-	//we should be turning left
-	speed = ((512 - x_value)*100) / 512;
-	cur_dir = TURN_LEFT;
+    }else if (x_value > startingRange + noMotion) {  // Turning right
+    	speed = ((x_value - startingRange) * 100) / 511;
+    	cur_dir = TURN_LEFT;
+
+    }else if (x_value < startingRange - noMotion) {  // Turning left
+   	speed = ((startingRange - x_value) * 100) / 512;
+    	cur_dir = TURN_RIGHT;
+    } else {
+	speed = 0;  // Neutral position
     }
 
     if(speed == 0){

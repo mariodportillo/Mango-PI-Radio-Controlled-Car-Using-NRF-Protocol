@@ -86,6 +86,11 @@ void test_read_channel_mcp(){
 void test_joystick_to_motor(){
   while(1){
      motor_control_from_joystick();
+     int x_value = mcp3008_read_channel(0);
+     int y_value = mcp3008_read_channel(1);
+     timer_delay_ms(100);
+     printf("x: %d y: %d \n", x_value, y_value); 
+     timer_delay_ms(100);
   }
 }
 
