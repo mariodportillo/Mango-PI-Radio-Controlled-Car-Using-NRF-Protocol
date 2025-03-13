@@ -2,6 +2,7 @@
 #include "spi.h"
 #include "spi_comm.h"
 #include "printf.h"
+#include "timer.h"
 
 void select_nrf24() {
     gpio_write(CSN_NRF24, 0);  // Enable nRF
@@ -11,6 +12,7 @@ void select_nrf24() {
 void select_mcp3008() {
     gpio_write(CSN_NRF24, 1);  // Disable nRF
     gpio_write(CSN_MCP3008, 1); // Disable MCP3008
+    timer_delay_us(50);
     gpio_write(CSN_MCP3008, 0); // Enable MCP3008
 }
 

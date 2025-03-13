@@ -1,28 +1,27 @@
 #include "gpio.h"
 #include "spi_comm.h"
-#include "printf.h"
 #include "mcp3008.h"
-// Read ADC from MCP3008 (channel 0)
+#include "spi.h"
+// // Read ADC from MCP3008 (channel 0)
 
-void mcp3008_config(){
+
+
+void mcp3008_init(void)  {
+    spi_init(SPI_MODE_0);
     gpio_set_output(CSN_MCP3008);
 }
 
-//Spi must be initted to use this function
-int mcp3008_read_channel(int channel) {
-    uint8_t tx_buf[3] = {0};
-    uint8_t rx_buf[3] = {0};
+unsigned int mcp3008_read_channel(int channel) {
+    uint8_t tx[3], rx[3];
 
-    tx_buf[0] = (8 | channel) << 4;
+    // "Start bit", wakes up the ADC chip. 
+    tx[0] = 1;
+    // "Configuration byte", single mode + channel
+    // valid channels 0-7
+    tx[1] = 0x80 | ((channel & 0x7) << 4);
+    tx[2] = 0;
 
-    spi_transfer_device(tx_buf, rx_buf, 3, MCP3008_MODE);
-    
-    
-    int value = ((rx_buf[1] & 3) << 8) | rx_buf[2]; // 10-bit ADC value
-    
-    // for(int i = 0; i < 3; i++){
-	// value |= rx_buf[i] << (i * 8);
-    // }
-    
-    return value;
+    spi_transfer_device(tx, rx, sizeof(tx), MCP3008_MODE);
+    // reading is 10-bit (0-1023)
+    return ((rx[1] & 0x3) << 8) + rx[2];
 }
