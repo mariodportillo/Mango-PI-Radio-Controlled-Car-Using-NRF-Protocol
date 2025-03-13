@@ -1,3 +1,4 @@
+
 /* File: test_receiver.c
  * ---------------------------
  * ***** Compile and run this code on the receiver  *****
@@ -12,7 +13,20 @@
  
  uint8_t rx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
  uint8_t rx_data[32];
- 
+
+
+void test_receiver_simple(){
+    nrf24_set_rx_mode(rx_address, 10);
+    printf("Waiting for data...\n");
+
+    while(1){
+        if (is_data_available(1)){
+            nrf24_receive(rx_data);
+            printf("Received: %s\n", rx_data);  // Print received data
+        }
+    }
+}
+
  void test_receiver(){
      nrf24_set_rx_mode(rx_address, 10);
      printf("Waiting for data...\n");
@@ -66,9 +80,9 @@ void test_receiver_motor(){
      gpio_set_output(GPIO_PB2);  
      nrf24_set_rx_mode(rx_address, 10);
      
-     //test_receiver();
-     motor_init();
-     test_motor();
-     test_receiver_motor();
+     test_receiver_simple();
+    //  motor_init();
+    //  test_motor();
+    //  test_receiver_motor();
  }
  
