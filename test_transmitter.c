@@ -77,6 +77,7 @@ void test_read_channel_mcp(){
   while(1){
 	value = mcp3008_read_channel(0);
 	printf("Current value: %d \n", value);
+    timer_delay_ms(100);
   }
 
 }
@@ -84,9 +85,10 @@ void test_read_channel_mcp(){
 void main(void){
     uart_init();
     nrf24_init();
+    mcp3008_config();
     nrf24_set_tx_mode(tx_address, 10);
     
-    //test_read_channel_mcp();
-    test_transmission_simple();
+    test_read_channel_mcp();
+    //test_transmission_simple();
     //test_transmission();
 }
