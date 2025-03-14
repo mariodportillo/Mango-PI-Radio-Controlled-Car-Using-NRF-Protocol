@@ -2,7 +2,7 @@
 #include "spi_comm.h"
 #include "mcp3008.h"
 #include "spi.h"
-// // Read ADC from MCP3008 (channel 0)
+// Read ADC from MCP3008 (channel 0)
 
 
 
