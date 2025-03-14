@@ -15,10 +15,10 @@ uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
 uint8_t tx_on[] = "ON";
 uint8_t tx_off[] = "OFF";
 int led_state = 0; // track LED state
-uint8_t tx_data[] = "Hello World\n";
 
 void test_transmission_simple(){
     printf("Press 'q' to stop transmission.\n");
+    uint8_t tx_data[] = "Hello World\n";
 
     while (1) {  // Infinite loop for continuous transmission
         if (nrf24_transmit(tx_data)) {
@@ -89,7 +89,7 @@ void test_joystick_to_motor(){
      int x_value = mcp3008_read_channel(0);
      int y_value = mcp3008_read_channel(1);
      timer_delay_ms(100);
-     printf("x: %d y: %d \n", x_value, y_value); 
+     //printf("x: %d y: %d \n", x_value, y_value); 
      timer_delay_ms(100);
   }
 }

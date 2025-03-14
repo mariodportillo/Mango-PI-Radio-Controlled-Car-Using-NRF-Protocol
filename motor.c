@@ -5,6 +5,7 @@
 #include "motor.h"
 #include "printf.h"
 #include "math_float.h"
+#include "nrf.h"
 
 void motor_init(void) {
     pwm_init();  
@@ -105,15 +106,15 @@ void drive_pivot_spin_left_time(unsigned long millisecond){
 }
 
 // This below function must be continously called in order to work properly
-// i.e a while loop.  
+// i.e a while loop.
 void motor_control_from_joystick(void) {
     //int joystick_value = mcp3008_read_channel(0);  // read ADC (joystick is on ADC channel 0)
     // Convert ADC (0-1023) to duty cycle (0-100%)
     int x_value = mcp3008_read_channel(X_CHANNEL); // const X_CHANNEL defined in the header file
-    int y_value = mcp3008_read_channel(Y_CHANNEL);
+    int y_value = mcp3008_read_channel(Y_CHANNEL); // const Y_CHANNEL defined in the header file
 
     int speed = 0;     //(joystick_value * 100) / 1023; // -> needs to be between 0 and 100%
-    motor_direction cur_dir = MOVE_FORWARD; //
+    motor_direction cur_dir = MOVE_FORWARD; // default direction is forward
     int startingRange = 515; //these values can be adjusted
     int noMotion = 30; // these values can be adjusted
 
@@ -139,27 +140,62 @@ void motor_control_from_joystick(void) {
     if(speed == 0){
 	return; 
     }
-
+    //TODO: Gert rid of this below code and make a reciever funciton of this code. 
+    // in the future this below pwm code needs to go to the reciever not the transmitter.
     pwm_set_duty(PWM7, speed);  // Set Motor A speed
     pwm_set_duty(PWM2, speed);  // Set Motor B speed
+    
+    nrf24_init();
+    uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
+    nrf24_set_tx_mode(tx_address, 10);
+    
 
     switch(cur_dir){
 
-    case MOVE_FORWARD:
-        printf("Forward \n");
-        break;
+    case MOVE_FORWARD:{
+	//send a message	
+    	uint8_t tx_data[] = "Forward";
 
-    case MOVE_BACKWARD:
-        printf("Backwards\n");
-        break;
+        if (nrf24_transmit(tx_data)) {
+            printf("%s, Speed: %d\n", tx_data, speed);
+        } else {
+            printf("Transmission failed\n");
+        }
 
-    case TURN_RIGHT:
-        printf("Right\n");
         break;
+    }
+    case MOVE_BACKWARD: {
+    	uint8_t tx_data[] = "Backward";
+        if (nrf24_transmit(tx_data)) {
+            printf("%s, Speed: %d\n", tx_data, speed);
+        } else {
+            printf("Transmission failed\n");
+        }
 
-    case TURN_LEFT:
-        printf("Left\n");
         break;
+    }
+    case TURN_RIGHT: {
+	//send a message
+    	uint8_t tx_data[] = "Right";
+        if (nrf24_transmit(tx_data)) {
+            printf("%s, Speed: %d\n", tx_data, speed);
+        } else {
+            printf("Transmission failed\n");
+        }
+
+        break;
+    }
+    case TURN_LEFT: {
+    	uint8_t tx_data[] = "Left";
+	//send a message
+        if (nrf24_transmit(tx_data)) {
+            printf("%s, Speed: %d\n", tx_data, speed);
+        } else {
+            printf("Transmission failed\n");
+        }
+
+        break;
+    }
     default:
 	printf("Invalid cur_dir: %d \n", cur_dir);
 	//do nothing -> invalid cur_dir
