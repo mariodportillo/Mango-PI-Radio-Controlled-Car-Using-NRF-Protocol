@@ -75,8 +75,11 @@ void test_read_channel_mcp(){
   int value = 0;
 
   while(1){
-	value = mcp3008_read_channel(0);
-	printf("Current value: %d \n", value);
+	unsigned int yvalue = mcp3008_read_channel(0);
+	unsigned int xvalue = mcp3008_read_channel(1);
+	printf("Current x value: %d  ", xvalue);
+	printf("Current y value: %d \n", yvalue);
+
     timer_delay_ms(100);
   }
 
@@ -84,10 +87,10 @@ void test_read_channel_mcp(){
 
 void main(void){
     uart_init();
-    //nrf24_init();
+    nrf24_init();
     spi_init(SPI_MODE_0);
     mcp3008_init();
-    //nrf24_set_tx_mode(tx_address, 10);
+    nrf24_set_tx_mode(tx_address, 10);
     
     test_read_channel_mcp();
     //test_transmission_simple();
