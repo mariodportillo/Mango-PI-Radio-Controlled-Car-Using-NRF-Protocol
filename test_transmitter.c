@@ -102,6 +102,7 @@ void main(void){
     nrf24_init();
     spi_init(SPI_MODE_0);
     mcp3008_init();
+    motor_init();
     //nrf24_set_tx_mode(tx_address, 10);
     
     //test_read_channel_mcp();

@@ -36,7 +36,7 @@ void drive_pivot_spin_left_time(unsigned long millisecond);
 
 
 void motor_control_from_joystick();
-
+void motorDriveRecieve (void);
 
 
 
