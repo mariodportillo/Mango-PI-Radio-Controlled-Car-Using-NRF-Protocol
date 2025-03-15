@@ -2,12 +2,13 @@
  * HC-SR04 ultrasonic range sensor
  * Datasheet https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf
  */
-#include "gpio.h"
-#include "gpio_extra.h"
+#include "us.h"
+#include "timer.h"
+// for testing. Pls remove
+
 #include "uart.h"
 #include "printf.h"
 #include "strings.h"
-#include "timer.h"
 
 static const gpio_id_t echo = GPIO_PB3, trigger = GPIO_PB2;
 

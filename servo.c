@@ -1,5 +1,7 @@
 #include "servo.h"
 #include "timer.h"
+
+// for testing. Pls remove
 #include "printf.h"
 #include "uart.h"
 
@@ -18,10 +20,10 @@ void servo_set_angle(pwm_channel_id_t ch, int angle) {
     if (angle > 180) angle = 180;
 
     
-    int min_pulse = 750;   // 0° position
-    int max_pulse = 2500;  // 180° position
+    int min_pulse = 750;   // 0 degree position
+    int max_pulse = 2500;  // 180 degree position
 
-    // Map angle (0-180) to pulse width (min_pulse to max_pulse)
+    // map angle (0-180) to pulse width (min_pulse to max_pulse)
     int pulse_width_us = min_pulse + ((angle * (max_pulse - min_pulse)) / 180);
     printf("pulse width: %d\n", pulse_width_us);
 
@@ -29,29 +31,19 @@ void servo_set_angle(pwm_channel_id_t ch, int angle) {
     pwm_set_duty(ch, duty_percent);
 }
 
-void radar_scan() {
-    for (int angle = 0; angle <= 180; angle += 5) {
-        servo_set_angle(PWM4, angle);
-        timer_delay_ms(100); // Allow time for movement
-        
-        // int distance = sense_distance(GPIO_PD2, GPIO_PD3); // Trigger & Echo
-        // distance_data[angle / 10] = distance; // Store data
-    }
-}
-
-
-int main(void) {
-    servo_init(PWM4, GPIO_PB1);  
-    uart_init();
-    while(1){
-    radar_scan();
-    }
-    while (1) {
-        servo_set_angle(PWM4, 0);    // Move to 0°
-        timer_delay_ms(1000);
-        servo_set_angle(PWM4, 90);   // Move to 90°
-        timer_delay_ms(1000);
-        servo_set_angle(PWM4, 180);  // Move to 180°
-        timer_delay_ms(1000);
-    }
-}
+// TODO: uncomment for testing. If uncommented, be sure to remove this file from the Makefile before building
+// int main(void) {
+//     servo_init(PWM4, GPIO_PB1);  
+//     uart_init();
+//     while(1){
+//     radar_scan();
+//     }
+//     while (1) {
+//         servo_set_angle(PWM4, 0);    // Move to 0°
+//         timer_delay_ms(1000);
+//         servo_set_angle(PWM4, 90);   // Move to 90°
+//         timer_delay_ms(1000);
+//         servo_set_angle(PWM4, 180);  // Move to 180°
+//         timer_delay_ms(1000);
+//     }
+// }

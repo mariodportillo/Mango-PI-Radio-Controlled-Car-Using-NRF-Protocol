@@ -102,40 +102,56 @@ color_t gl_read_pixel(int x, int y) {
     return (color_t)im[y][x];
 }
 
+// Sahan's Code
 void gl_draw_rect(int x, int y, int w, int h, color_t c) {
-   
-   int x_end = x + w;
-   int y_end = y + h;
- 
-   for(int curY = y; curY < y_end; curY++ ){
-	for(int curX = x; curX < x_end; curX++){
-	   gl_draw_pixel(curX,curY,c); 
-	}
-   }
+    int WIDTH = gl_get_width();
+    int HEIGHT = gl_get_height();
+    
+    color_t (*img)[WIDTH] = fb_get_draw_buffer();
+    if (x < 0){
+        w += x;
+        x = 0;
+        
+    } 
+    if (y < 0){
+        h += y;
+        y = 0;
+    } 
+
+    if (x + w > WIDTH) w = WIDTH - x;
+    if (y + h > HEIGHT)  h = HEIGHT - y;
+    if ((w < 0) || (h < 0)) return;
+
+    for (int j = 0; j < h; j++){
+        for (int i = 0; i < w; i++){
+            img[y + j][x + i] = c;
+        }
+    }
 }
 
 void gl_draw_char(int x, int y, char ch, color_t c) {
+    uint8_t buf[font_get_glyph_size()];
+    if (!font_get_glyph(ch, buf, sizeof(buf))){
+        return;             // no character found
+    }
+    // for our glyph
+    int glyph_width = font_get_glyph_width();
+    int glyph_height = font_get_glyph_height();
+    uint8_t (*glyph)[glyph_width] = (uint8_t (*)[glyph_width])buf;      // buffer containing the glyph
 
-   int h = font_get_glyph_height();
-   int w = font_get_glyph_width(); 
 
-   uint8_t buf[w*h];
+    for (int j = 0; j < glyph_height; j++) {
+        for (int i = 0; i < glyph_width; i++) {
+            if (glyph[j][i] == 0xff){
+                gl_draw_pixel(x + i, y + j, c);
+            }
+            
+        }
+    }
 
-   if(!font_get_glyph(ch, buf, sizeof(buf))){
-	return;
-   }
-   
-   uint8_t secondBuf[h][w];
-   memcpy(secondBuf, buf, sizeof(buf));
-
-   for(int curY = 0; curY < h; curY++){
-        for(int curX = 0; curX < w; curX++){
-	    if(secondBuf[curY][curX] == 0xff){
-	         gl_draw_pixel(curX + x, curY + y, c);
-	    }
-	}
-   }
 }
+
+// End of Sahan's code
 
 void gl_draw_string(int x, int y, const char* str, color_t c) { 
     for(int i = 0; i < strlen(str); i++){
