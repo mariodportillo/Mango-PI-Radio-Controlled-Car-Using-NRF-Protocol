@@ -5,7 +5,7 @@
 #include "gpio_extra.h"
 
 
-static int sense_distance(gpio_id_t trigger, gpio_id_t echo);
+int sense_distance();
 
 
 

@@ -14,7 +14,7 @@ static const gpio_id_t echo = GPIO_PB3, trigger = GPIO_PB2;
 
 #define MAX_RANGE (13*12) // 13 ft max range
 
-static int sense_distance(gpio_id_t trigger, gpio_id_t echo) {
+int sense_distance() {
 	gpio_write(trigger, 1);
 	timer_delay_us(10);    // pulse (set trigger hi for 10 us)
 	gpio_write(trigger, 0);
@@ -41,19 +41,21 @@ static void print_distance(int inches) {
     printf("%s %d\n", buf, inches);
 }
 
-void main(void) {
 
-    timer_init();
-    gpio_init();
-    uart_init();
-  	gpio_set_output(trigger);
-  	gpio_set_input(echo);
-  	gpio_set_pulldown(echo);
+// TODO: uncomment for testing. If uncommented, be sure to remove this file from the Makefile before building
+// void main(void) {
 
-    printf("Starting program %s\n\n", __FILE__);
-  	while (1) {
-		int inches = sense_distance(trigger, echo);
-        print_distance(inches);
-        timer_delay_ms(250);
-	}
-}
+//     timer_init();
+//     gpio_init();
+//     uart_init();
+//   	gpio_set_output(trigger);
+//   	gpio_set_input(echo);
+//   	gpio_set_pulldown(echo);
+
+//     printf("Starting program %s\n\n", __FILE__);
+//   	while (1) {
+// 		int inches = sense_distance();
+//         print_distance(inches);
+//         timer_delay_ms(250);
+// 	}
+// }
