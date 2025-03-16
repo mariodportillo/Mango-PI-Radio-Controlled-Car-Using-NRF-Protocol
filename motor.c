@@ -359,34 +359,37 @@ void motorDriveRecieve (void){
 	return;
     }
 
-    // uint8_t Forward[] = "Forward Speed: ";
-    // uint8_t Backward[] = "Backward Speed: ";
-    // uint8_t Right[] = "Right Speed: ";
-    // uint8_t Left[] = "Left Speed: ";
+    uint8_t Forward[] = "Forward Speed: ";
+    uint8_t Backward[] = "Backward Speed: ";
+    uint8_t Right[] = "Right Speed: ";
+    uint8_t Left[] = "Left Speed: ";
 
-    // unsigned int speed = 0;
-    // if(checkFirstChars(rx_data, Forward, strlen((const char*)Forward)) == 0){
-    // 	speed = grabSpeed(rx_data);
-	// pwm_set_duty(PWM7, speed);  // Set Motor A speed
-    // 	pwm_set_duty(PWM2, speed);  // Set Motor B speed
-	// printf("I am going Forward, Speed: %d\n", speed);
-    // }else if(checkFirstChars(rx_data, Backward, strlen((const char*)Backward)) == 0){
-    // 	speed = grabSpeed(rx_data);	
-	// pwm_set_duty(PWM7, speed);  // Set Motor A speed
-    // 	pwm_set_duty(PWM2, speed);  // Set Motor B speed
-	// printf("I am going Backward, Speed: %d\n", speed);
-    // }else if(checkFirstChars(rx_data, Right, strlen((const char*)Right)) == 0){
-    // 	speed = grabSpeed(rx_data);
-	// pwm_set_duty(PWM7, speed);  // Set Motor A speed
-    // 	pwm_set_duty(PWM2, speed);  // Set Motor B speed
-	// printf("I am going Right, Speed: %d\n", speed);
-    // }else if(checkFirstChars(rx_data, Left, strlen((const char*)Left)) == 0){
-    // 	speed = grabSpeed(rx_data);	
-	// pwm_set_duty(PWM7, speed);  // Set Motor A speed
-    // 	pwm_set_duty(PWM2, speed);  // Set Motor B speed
+    unsigned int speed = 0;
+    if(checkFirstChars(rx_data, Forward, strlen((const char*)Forward)) == 1){
+     	speed = grabSpeed(rx_data);
+	pwm_set_duty(PWM7, speed);  // Set Motor A speed
+     	pwm_set_duty(PWM2, speed);  // Set Motor B speed
+	
+	printf("I am going Forward, Speed: %d\n", speed);
+    }else if(checkFirstChars(rx_data, Backward, strlen((const char*)Backward)) == 1){
+     	speed = grabSpeed(rx_data);	
+	pwm_set_duty(PWM7, speed);  // Set Motor A speed
+	pwm_set_duty(PWM2, speed);  // Set Motor B speed
+	
+	printf("I am going Backward, Speed: %d\n", speed);
+    }else if(checkFirstChars(rx_data, Right, strlen((const char*)Right)) == 1){
+    	speed = grabSpeed(rx_data);
+	pwm_set_duty(PWM7, speed);  // Set Motor A speed
+     	pwm_set_duty(PWM2, speed);  // Set Motor B speed
+	
+	printf("I am going Right, Speed: %d\n", speed);
+    }else if(checkFirstChars(rx_data, Left, strlen((const char*)Left)) == 1){
+    	speed = grabSpeed(rx_data);	
+	pwm_set_duty(PWM7, speed);  // Set Motor A speed
+	pwm_set_duty(PWM2, speed);  // Set Motor B speed
 
-	// printf("I am going Left, Speed: %d\n", speed);
-    // }else{
-	// return;
-    // }
+	printf("I am going Left, Speed: %d\n", speed);
+    }else{
+	return;
+    }
 }
