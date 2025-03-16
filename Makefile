@@ -10,6 +10,7 @@ RECEIVER_PROGRAM = test_receiver.bin
 SHELL_PROGRAM = test_RCshell.bin
 RADAR_PROGRAM = radar.bin
 SERVO_PROGRAM = servo.bin
+US_PROGRAM = us.bin
 
 MY_MODULE_SOURCES = mymodule.c code_extras/spi.c code_extras/i2s.c code_extras/pwm.c \
 		    nrf.c code_extras/mathlib/math_float.c spi_comm.c motor.c servo.c us.c display.c mcp3008.c uart_shell_rc.c 
@@ -68,6 +69,9 @@ servo: $(SERVO_PROGRAM)
 receiver: $(RECEIVER_PROGRAM)
 	mango-run $<
 shell: $(SHELL_PROGRAM)
+	mango-run $<
+
+us: $(US_PROGRAM)
 	mango-run $<
 
 # Remove all build products

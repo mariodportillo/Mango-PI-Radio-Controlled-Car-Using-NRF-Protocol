@@ -4,7 +4,7 @@
 #include "gpio.h"
 #include "gpio_extra.h"
 
-
+void us_init();
 int sense_distance();
 
 

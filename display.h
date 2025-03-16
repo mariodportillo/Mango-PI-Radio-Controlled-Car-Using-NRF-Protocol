@@ -4,6 +4,7 @@
 
 #include "gl.h"
 #include "console.h"
+#include "radar.h"
 
 void console_init(int nrows, int ncols, color_t foreground, color_t background);
 void console_clear(void);

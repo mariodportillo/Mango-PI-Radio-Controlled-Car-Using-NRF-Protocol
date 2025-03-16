@@ -25,7 +25,7 @@ void servo_set_angle(pwm_channel_id_t ch, int angle) {
 
     // map angle (0-180) to pulse width (min_pulse to max_pulse)
     int pulse_width_us = min_pulse + ((angle * (max_pulse - min_pulse)) / 180);
-    printf("pulse width: %d\n", pulse_width_us);
+    //printf("pulse width: %d\n", pulse_width_us);
 
     int duty_percent = (pulse_width_us * 100) / 20000;  
     pwm_set_duty(ch, duty_percent);
@@ -35,9 +35,7 @@ void servo_set_angle(pwm_channel_id_t ch, int angle) {
 // int main(void) {
 //     servo_init(PWM4, GPIO_PB1);  
 //     uart_init();
-//     while(1){
-//     radar_scan();
-//     }
+    
 //     while (1) {
 //         servo_set_angle(PWM4, 0);    // Move to 0°
 //         timer_delay_ms(1000);

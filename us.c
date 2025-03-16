@@ -14,6 +14,14 @@ static const gpio_id_t echo = GPIO_PB3, trigger = GPIO_PB2;
 
 #define MAX_RANGE (13*12) // 13 ft max range
 
+void us_init(){
+    gpio_init();
+    gpio_set_output(trigger);
+  	gpio_set_input(echo);
+  	gpio_set_pulldown(echo);
+
+}
+
 int sense_distance() {
 	gpio_write(trigger, 1);
 	timer_delay_us(10);    // pulse (set trigger hi for 10 us)
