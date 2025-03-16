@@ -369,26 +369,34 @@ void motorDriveRecieve (void){
      	speed = grabSpeed(rx_data);
 	pwm_set_duty(PWM7, speed);  // Set Motor A speed
      	pwm_set_duty(PWM2, speed);  // Set Motor B speed
-	
+	drive_forward_time(10);     // drive forward for 10 ms. 
 	printf("I am going Forward, Speed: %d\n", speed);
+	return;
+
     }else if(checkFirstChars(rx_data, Backward, strlen((const char*)Backward)) == 1){
      	speed = grabSpeed(rx_data);	
 	pwm_set_duty(PWM7, speed);  // Set Motor A speed
 	pwm_set_duty(PWM2, speed);  // Set Motor B speed
-	
 	printf("I am going Backward, Speed: %d\n", speed);
+	drive_reverse_time(10);     // drive backward for 10 ms.
+	return; 
+
     }else if(checkFirstChars(rx_data, Right, strlen((const char*)Right)) == 1){
     	speed = grabSpeed(rx_data);
 	pwm_set_duty(PWM7, speed);  // Set Motor A speed
      	pwm_set_duty(PWM2, speed);  // Set Motor B speed
-	
+	drive_spin_right_time(10);  // spin turn right for 10 ms.
 	printf("I am going Right, Speed: %d\n", speed);
+	return;
+
     }else if(checkFirstChars(rx_data, Left, strlen((const char*)Left)) == 1){
     	speed = grabSpeed(rx_data);	
 	pwm_set_duty(PWM7, speed);  // Set Motor A speed
 	pwm_set_duty(PWM2, speed);  // Set Motor B speed
-
+	drive_spin_left_time(10);   // spin turn left for 10 ms. 
 	printf("I am going Left, Speed: %d\n", speed);
+	return; 
+
     }else{
 	return;
     }
