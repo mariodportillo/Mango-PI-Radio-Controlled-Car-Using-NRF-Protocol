@@ -23,11 +23,11 @@ void radar_scan() {
     for (int i = 0; i < NUM_ANGLES; i++) {  // 0, 5, 10, ... 180
         int angle = i * STEP_SIZE;
         servo_set_angle(PWM4, angle);
-        timer_delay_ms(500);  
+        timer_delay_ms(250);  
         
         int distance = sense_distance();
         distance_data[i] = distance;  // Store it in our compact array
-        printf("distance_data[%d]: %d\n", i, distance);
+        //printf("distance_data in radar_scan[%d]: %d  ", i, distance);
     }
 
 }
@@ -39,6 +39,7 @@ void main(void) {
     us_init();
     const int SCREEN_WIDTH = 40;  // Number of columns in console
     const int SCREEN_HEIGHT = 20; // Number of rows in console
+    // 1 col is 2 inch i row is 1 inch
     console_init(SCREEN_HEIGHT, SCREEN_WIDTH, gl_color(255, 255, 255), gl_color(0, 0, 0));
     
     servo_init(PWM4, GPIO_PB1);  

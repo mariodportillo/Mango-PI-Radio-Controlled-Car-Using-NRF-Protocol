@@ -6,6 +6,7 @@
 #include "gl.h"
 #include "strings.h"
 #include "malloc.h"
+#include "math_float.h"
 
 
 // module-level variables
@@ -101,10 +102,14 @@ void radar_display(int *distance_data) {
     for (int i = 0; i < NUM_ANGLES; i++) {
         int angle = i * STEP_SIZE;  // Convert index back to angle
         int distance = distance_data[i];  // Read corresponding data
+        //printf("distance_data in radar_display[%d]: %d  \n", i, distance);
 
         // Convert angle + distance into screen coordinates
-        int dx = (distance * module.ncols / 100) * cos(angle * 3.14 / 180);  // Scale X
-        int dy = (distance * module.nrows / 100) * sin(angle * 3.14 / 180); // Scale Y
+        int dx = (distance) * cos(angle * PI /180);  // Scale X
+        printf("angle: %d ", angle);
+        printf("dx: %d ", dx);
+        int dy = (distance) * sin(angle * PI /180); // Scale Y
+        printf("dy: %d \n", dy);
 
         int x = car_x + dx;
         int y = car_y - dy; // Moving upwards

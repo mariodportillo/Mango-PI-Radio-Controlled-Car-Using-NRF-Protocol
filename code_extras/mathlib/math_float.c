@@ -10,7 +10,7 @@
 
 // double has 24 bits mantissa
 // precision is log_10(2^24) = 7.2
-// #define PI 3.141592653589793
+#define PI 3.141592653589793
 // #define E 2.718281828459045
 // #define LN_2 0.6931471805599453
 // #define SQRT_2 1.414213562373095
