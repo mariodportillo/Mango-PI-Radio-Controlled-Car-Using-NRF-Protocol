@@ -42,68 +42,58 @@ static void motorB_set_direction(int dir) {
     }
 }
 
+static void all_stop(){
+    gpio_write(IN1_PIN, 0);
+    gpio_write(IN2_PIN, 0);
+    gpio_write(IN3_PIN, 0);
+    gpio_write(IN4_PIN, 0);
 
+}
 // For the below code I am assuming
 // motorA = left wheel
 // motorB = right wheel
 void drive_forward_time(unsigned long millisecond){
-    unsigned long startTime = timer_get_ticks();
-    unsigned long endTime = millisecond * 24000;  // Convert milliseconds to ticks
-
-    while (timer_get_ticks() - startTime < endTime) {
-       motorA_set_direction(1);
-       motorB_set_direction(1);
-    }
+    motorA_set_direction(1);
+    motorB_set_direction(1);
+    timer_delay_ms(millisecond);
+    all_stop();
+    
 }
 
 void drive_reverse_time(unsigned long millisecond){
-    unsigned long startTime = timer_get_ticks();
-    unsigned long endTime = millisecond * 24000;  // Convert milliseconds to ticks
-
-    while (timer_get_ticks() - startTime < endTime) {
-       motorA_set_direction(0);
-       motorB_set_direction(0);
-    }
+    motorA_set_direction(0);
+    motorB_set_direction(0);
+    timer_delay_ms(millisecond);
+    all_stop();
 }
 
 //This will turn in place and both wheels turn in opposite directions. 
 void drive_spin_right_time(unsigned long millisecond){
-    unsigned long startTime = timer_get_ticks();
-    unsigned long endTime = millisecond * 24000;  // Convert milliseconds to ticks
-
-    while (timer_get_ticks() - startTime < endTime) {
-       motorA_set_direction(1);
-       motorB_set_direction(0);
-    }
+    motorA_set_direction(1);
+    motorB_set_direction(0);
+    timer_delay_ms(millisecond);
+    all_stop();
 }
 
 void drive_spin_left_time(unsigned long millisecond){
-    unsigned long startTime = timer_get_ticks();
-    unsigned long endTime = millisecond * 24000;  // Convert milliseconds to ticks
+    motorA_set_direction(0);
+    motorB_set_direction(1);
+    timer_delay_ms(millisecond);
+    all_stop();
 
-    while (timer_get_ticks() - startTime < endTime) {
-       motorA_set_direction(0);
-       motorB_set_direction(1);
-    }
 }
 
 //These below turns are done using only one motor while the other is stationary
 void drive_pivot_spin_right_time(unsigned long millisecond){
-    unsigned long startTime = timer_get_ticks();
-    unsigned long endTime = millisecond * 24000;  // Convert milliseconds to ticks
-
-    while (timer_get_ticks() - startTime < endTime) {
-       motorA_set_direction(1);
-    }
+    motorA_set_direction(1);
+    timer_delay_ms(millisecond);
+    all_stop();
 }
 
 void drive_pivot_spin_left_time(unsigned long millisecond){
-    unsigned long startTime = timer_get_ticks();
-    unsigned long endTime = millisecond * 24000;  // Convert milliseconds to ticks
-
-    while (timer_get_ticks() - startTime < endTime) {
-       motorB_set_direction(1);
-    }
+    motorB_set_direction(1);
+    timer_delay_ms(millisecond);
+    all_stop();
 }
 
 //Below code is from Mario Portillo Printf.c internal 
@@ -367,35 +357,38 @@ void motorDriveRecieve (void){
     unsigned int speed = 0;
     if(checkFirstChars(rx_data, Forward, strlen((const char*)Forward)) == 1){
      	speed = grabSpeed(rx_data);
-	pwm_set_duty(PWM7, speed);  // Set Motor A speed
-     	pwm_set_duty(PWM2, speed);  // Set Motor B speed
-	drive_forward_time(10);     // drive forward for 10 ms. 
-	printf("I am going Forward, Speed: %d\n", speed);
-	return;
+        printf("I ran! setting pwm duty now!\n");
+        pwm_set_duty(PWM7, speed);  // Set Motor A speed
+        //pwm_set_freq(PWM7, 10000);
+        pwm_set_duty(PWM2, speed);  // Set Motor B speed
+        //pwm_set_freq(PWM2, 10000);
+        drive_forward_time(500);     // drive forward for 10 ms. 
+        printf("I am going Forward, Speed: %d\n", speed);
+        return;
 
     }else if(checkFirstChars(rx_data, Backward, strlen((const char*)Backward)) == 1){
      	speed = grabSpeed(rx_data);	
-	pwm_set_duty(PWM7, speed);  // Set Motor A speed
-	pwm_set_duty(PWM2, speed);  // Set Motor B speed
-	printf("I am going Backward, Speed: %d\n", speed);
-	drive_reverse_time(10);     // drive backward for 10 ms.
-	return; 
+	    pwm_set_duty(PWM7, speed);  // Set Motor A speed
+	    pwm_set_duty(PWM2, speed);  // Set Motor B speed
+	    printf("I am going Backward, Speed: %d\n", speed);
+	    drive_reverse_time(500);     // drive backward for 10 ms.
+	    return; 
 
     }else if(checkFirstChars(rx_data, Right, strlen((const char*)Right)) == 1){
     	speed = grabSpeed(rx_data);
-	pwm_set_duty(PWM7, speed);  // Set Motor A speed
-     	pwm_set_duty(PWM2, speed);  // Set Motor B speed
-	drive_spin_right_time(10);  // spin turn right for 10 ms.
-	printf("I am going Right, Speed: %d\n", speed);
-	return;
+        pwm_set_duty(PWM7, speed);  // Set Motor A speed
+        pwm_set_duty(PWM2, speed);  // Set Motor B speed
+        drive_spin_right_time(500);  // spin turn right for 10 ms.
+        printf("I am going Right, Speed: %d\n", speed);
+        return;
 
     }else if(checkFirstChars(rx_data, Left, strlen((const char*)Left)) == 1){
     	speed = grabSpeed(rx_data);	
-	pwm_set_duty(PWM7, speed);  // Set Motor A speed
-	pwm_set_duty(PWM2, speed);  // Set Motor B speed
-	drive_spin_left_time(10);   // spin turn left for 10 ms. 
-	printf("I am going Left, Speed: %d\n", speed);
-	return; 
+        pwm_set_duty(PWM7, speed);  // Set Motor A speed
+        pwm_set_duty(PWM2, speed);  // Set Motor B speed
+        drive_spin_left_time(500);   // spin turn left for 10 ms. 
+        printf("I am going Left, Speed: %d\n", speed);
+        return; 
 
     }else{
 	return;

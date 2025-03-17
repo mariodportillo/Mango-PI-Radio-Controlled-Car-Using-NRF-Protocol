@@ -10,6 +10,10 @@
 #include "mcp3008.h"
 #include "spi.h"
 #include "motor.h"
+#include "display.h"
+#include "pwm.h"
+#include "servo.h"
+#include "us.h"
 
 uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
 uint8_t tx_on[] = "ON";
@@ -73,7 +77,6 @@ void test_transmission(){
 
 void test_read_channel_mcp(){
   printf("Now reading chaneel of MCP3008: \n");
-  int value = 0;
 
   while(1){
 	unsigned int yvalue = mcp3008_read_channel(0);
@@ -89,13 +92,29 @@ void test_read_channel_mcp(){
 void test_joystick_to_motor(){
   while(1){
      motor_control_from_joystick();
-     int x_value = mcp3008_read_channel(0);
-     int y_value = mcp3008_read_channel(1);
-     timer_delay_ms(100);
-     //printf("x: %d y: %d \n", x_value, y_value); 
      timer_delay_ms(100);
   }
 }
+
+
+// void radar_scan_and_transmit() {
+//     for (int i = 0; i < NUM_ANGLES; i++) {
+//         int angle = i * 5;
+//         servo_set_angle(PWM4, angle);
+//         timer_delay_ms(100);
+
+//         int distance = sense_distance();  
+//         radar_data[i].angle = angle;
+//         radar_data[i].distance = (distance > 255) ? 255 : distance;  // Limit distance
+
+//         // Send data in chunks of 16
+//         if (i % 16 == 15 || i == NUM_ANGLES - 1) {
+//             nrf24_transmit((uint8_t*)radar_data);  
+//             timer_delay_ms(10);
+//         }
+//     }
+// }
+
 
 void main(void){
     uart_init();
@@ -110,3 +129,25 @@ void main(void){
     //test_transmission();
     test_joystick_to_motor();
 }
+
+// a lil tricky
+// void main(void) {
+//     uart_init();
+//     us_init();
+//     const int SCREEN_WIDTH = 40;  // Number of columns in console
+//     const int SCREEN_HEIGHT = 20; // Number of rows in console
+//     // 1 col is 2 inch i row is 1 inch
+//     console_init(SCREEN_HEIGHT, SCREEN_WIDTH, gl_color(255, 255, 255), gl_color(0, 0, 0));
+    
+//     servo_init(PWM4, GPIO_PB1);  
+//     // for (int i = 0; i < NUM_ANGLES; i++){
+//     //     distance_data[i] = 10;
+//     //     //distance_data[i] = i * 2;  // test with increasing distances
+//     // }
+//     while (1) {
+//         radar_scan();
+
+//         radar_display(distance_data);
+//         timer_delay_ms(500);
+//     }
+// }

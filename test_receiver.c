@@ -10,6 +10,7 @@
  #include "gpio.h"
  #include "strings.h"
  #include "motor.h"
+ #include "timer.h"
  
  uint8_t rx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
  uint8_t rx_data[32];
@@ -49,6 +50,8 @@ void test_receiver_simple(){
 }
 void test_motor(){
     while(1){
+        //drive_forward_time(1000);
+        //timer_delay_ms(1000);
     	motorDriveRecieve();
     }
 }
@@ -77,7 +80,7 @@ void test_receiver_motor(){
  void main(void){
      uart_init();
      nrf24_init();
-     gpio_set_output(GPIO_PB2);  
+
      nrf24_set_rx_mode(rx_address, 10);
      
      //test_receiver_simple();

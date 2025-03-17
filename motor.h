@@ -5,9 +5,9 @@
 #define ENB_PIN GPIO_PB11  // PWM2 for Motor B speed
 
 #define IN1_PIN GPIO_PC0  // Motor A direction
-#define IN2_PIN GPIO_PB2  
-#define IN3_PIN GPIO_PB3  // Motor B direction
-#define IN4_PIN GPIO_PB4  
+#define IN2_PIN GPIO_PC1  
+#define IN3_PIN GPIO_PD14     // Motor B direction
+#define IN4_PIN GPIO_PD21 
 
 #define X_CHANNEL 0
 #define Y_CHANNEL 1
