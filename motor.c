@@ -7,17 +7,20 @@
 #include "math_float.h"
 #include "nrf.h"
 #include "strings.h"
+#include "gpio_extra.h"
 
 void motor_init(void) {
+    gpio_set_input(BUTTON);
+    gpio_set_pullup(BUTTON);
+
     pwm_init();  
     pwm_config_channel(PWM7, ENA_PIN, 10000, false); // 10kHz frequency for Motor A
     pwm_config_channel(PWM2, ENB_PIN, 10000, false); // 10kHz frequency for Motor B
-
+    
     gpio_set_output(IN1_PIN);
     gpio_set_output(IN2_PIN);
     gpio_set_output(IN3_PIN);
     gpio_set_output(IN4_PIN);
-
 }
 
 // set Motor A direction (1 = Forward, 0 = Reverse)
@@ -190,11 +193,44 @@ static const char *decimal_string(long val) {
 }
 
 //End of Mario's Code.
+#define DEBOUNCE_DELAY_TICKS (10 * 1000 * 24)
+static volatile uint32_t lastTime = 0; 
 
+static bool checkDebounce(void){
+    static int lastState = 1;
+    uint32_t curTime = timer_get_ticks();  // Get current time in ticks
+    int curState = gpio_read(BUTTON);
+
+    if (curState == 0 && lastState == 1) {
+        // Button state changed (pressed down)
+        if ((curTime - lastTime) >= DEBOUNCE_DELAY_TICKS) {
+            // Update last press time
+            lastTime = curTime;
+            return true;
+        }
+    }
+
+    lastState = curState;;
+    return false;
+}
 
 // This below function must be continously called in order to work properly
 // i.e a while loop.
 void motor_control_from_joystick(void) {
+    // check for button switch movement
+    if(checkDebounce()){		
+    	uint8_t tx_data[32];
+	tx_data[0] = '\0'; 
+	strlcat((char *)tx_data, "Activate Radar Scan", 32);
+
+        if (nrf24_transmit(tx_data)) {
+            printf("%s \n", tx_data);
+        } else {
+            printf("Transmission failed\n");
+        }
+	return;
+    }
+
     //int joystick_value = mcp3008_read_channel(0);  // read ADC (joystick is on ADC channel 0)
     // Convert ADC (0-1023) to duty cycle (0-100%)
     int x_value = mcp3008_read_channel(X_CHANNEL); // const X_CHANNEL defined in the header file
@@ -313,6 +349,7 @@ void motor_control_from_joystick(void) {
 	return;
     }
 }
+
 static int checkFirstChars(const uint8_t* rx_data, const uint8_t* direction, size_t size){
      for(int i = 0; i < size; i++){
 	if(rx_data[i] != direction[i]){

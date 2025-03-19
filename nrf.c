@@ -1,12 +1,10 @@
-#include <stdint.h>
-#include "gpio.h"
 #include "nrf.h"
 #include "spi.h"
 #include "strings.h"
 #include "printf.h"
 #include "timer.h"
 #include "spi_comm.h"
-
+#include  "gpio.h" 
 // define the chip enable to enable the NRF device
 #define NRF24_CE_PIN GPIO_PD15
 

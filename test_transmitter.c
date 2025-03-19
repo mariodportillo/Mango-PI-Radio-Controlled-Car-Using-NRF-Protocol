@@ -14,6 +14,7 @@
 #include "pwm.h"
 #include "servo.h"
 #include "us.h"
+#include "gpio_interrupt.h"
 
 uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
 uint8_t tx_on[] = "ON";
@@ -92,8 +93,24 @@ void test_read_channel_mcp(){
 void test_joystick_to_motor(){
   while(1){
      motor_control_from_joystick();
-     timer_delay_ms(100);
+     timer_delay_ms(300);
   }
+}
+
+
+
+void main(void){
+    uart_init();
+    nrf24_init();
+    spi_init(SPI_MODE_0);
+    mcp3008_init();
+    //nrf24_set_tx_mode(tx_address, 10);
+    
+    //test_read_channel_mcp();
+    //test_transmission_simple();
+    //test_transmission();
+    motor_init();
+    test_joystick_to_motor();
 }
 
 
@@ -115,20 +132,6 @@ void test_joystick_to_motor(){
 //     }
 // }
 
-
-void main(void){
-    uart_init();
-    nrf24_init();
-    spi_init(SPI_MODE_0);
-    mcp3008_init();
-    motor_init();
-    //nrf24_set_tx_mode(tx_address, 10);
-    
-    //test_read_channel_mcp();
-    //test_transmission_simple();
-    //test_transmission();
-    test_joystick_to_motor();
-}
 
 // a lil tricky
 // void main(void) {

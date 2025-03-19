@@ -11,6 +11,9 @@
 
 #define X_CHANNEL 0
 #define Y_CHANNEL 1
+
+#define BUTTON GPIO_PB3
+
 typedef enum {
     MOVE_FORWARD = 0,
     MOVE_BACKWARD = 1,
