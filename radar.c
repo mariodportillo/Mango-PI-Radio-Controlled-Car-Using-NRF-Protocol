@@ -6,26 +6,27 @@
 #include "math_float.h"
 #include "timer.h"
 #include "radar.h"
-
-// for testing only. Pls remove
-#include "strings.h"
-#include "printf.h"
+#include "malloc.h"
+#include "gpio.h"
 
 
-int distance_data[NUM_ANGLES];
+void radarInit(void){
+    servo_init(PWM4, GPIO_PB1);
+    us_init();
+}
 
+int* radar_scan() {
+    int* distance_data = malloc(NUM_ANGLES * sizeof(int));
 
-void radar_scan() {
     for (int i = 0; i < NUM_ANGLES; i++) {  // 0, 5, 10, ... 180
         int angle = i * STEP_SIZE;
         servo_set_angle(PWM4, angle);
         timer_delay_ms(250);  
         
         int distance = sense_distance();
-        distance_data[i] = distance;  // Store it in our compact array
-        //printf("distance_data in radar_scan[%d]: %d  ", i, distance);
+        distance_data[i] = distance;
     }
-
+    return distance_data; 
 }
 
 

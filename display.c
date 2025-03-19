@@ -79,8 +79,6 @@ void console_display(void){
     gl_swap_buffer();
 }
 
-
-
 void radar_display(int *distance_data) {
     console_clear();
     

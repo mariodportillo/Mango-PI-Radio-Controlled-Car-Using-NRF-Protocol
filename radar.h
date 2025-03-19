@@ -5,8 +5,8 @@
 #define STEP_SIZE 20
 #define NUM_ANGLES 10 // ((MAX_ANGLE / STEP_SIZE) + 1) : (180 / 20) + 1 = 10
 
-
-void radar_scan();
+void radarInit(void);
+int* radar_scan();
 
 
 #endif

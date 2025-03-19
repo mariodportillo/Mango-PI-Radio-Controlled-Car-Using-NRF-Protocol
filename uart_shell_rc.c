@@ -175,11 +175,11 @@ int reciever_mode(){
 	      module.shell_printf("Received: %s\n", rx_data);
 
 	      return 0;
-	}
+	    }
 
-	if(timer_get_ticks() - lastPrint >= 1000 * 24000){
-	   lastPrint = timer_get_ticks();
-	}
+	    if(timer_get_ticks() - lastPrint >= 1000 * 24000){
+	        lastPrint = timer_get_ticks();
+	    }
     }
 
     module.shell_printf("No messages were recieved.\n");

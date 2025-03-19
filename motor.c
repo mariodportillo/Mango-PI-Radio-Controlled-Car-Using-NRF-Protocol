@@ -8,6 +8,8 @@
 #include "nrf.h"
 #include "strings.h"
 #include "gpio_extra.h"
+#include "display.h"
+#include "malloc.h"
 
 void motor_init(void) {
     gpio_set_input(BUTTON);
@@ -44,7 +46,7 @@ static void motorB_set_direction(int dir) {
         gpio_write(IN4_PIN, 1);
     }
 }
-
+// sets all Motors to off. 
 static void all_stop(){
     gpio_write(IN1_PIN, 0);
     gpio_write(IN2_PIN, 0);
@@ -196,7 +198,8 @@ static const char *decimal_string(long val) {
 
 #define DEBOUNCE_DELAY_TICKS (10 * 1000 * 24) //10 ms delay
 static volatile uint32_t lastTime = 0; 
-
+//This below helper function determines if the input is just noise
+// or if it is a valid gpio input interrputed by the mango PI. 
 static bool checkDebounce(void){
     static int lastState = 1;
     uint32_t curTime = timer_get_ticks();  // Get current time in ticks
@@ -219,17 +222,53 @@ static bool checkDebounce(void){
 // i.e a while loop.
 void motor_control_from_joystick(void) {
     // check for button switch movement
-    if(checkDebounce()){		
+    if(checkDebounce()){
     	uint8_t tx_data[32];
-	tx_data[0] = '\0'; 
-	strlcat((char *)tx_data, "Activate Radar Scan", 32);
+	    tx_data[0] = '\0'; 
+	    strlcat((char *)tx_data, "Activate Radar Scan", 32);
 
         if (nrf24_transmit(tx_data)) {
-            printf("%s \n", tx_data);
+            printf("Sent: \"%s\" \n", tx_data);
         } else {
             printf("Transmission failed\n");
+            return; //if we fail we want to exit immediatley.
         }
-	return;
+        
+        // After we transmit the command we want to then go into a receiver mode to 
+        nrf24_init();
+        uint8_t rx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
+        nrf24_set_rx_mode(rx_address, 10);
+        uint8_t rx_data[32];
+        memset(rx_data, '\0', 32);
+        
+        printf("Waiting for data...\n");
+        unsigned long startTime = timer_get_ticks();
+        unsigned long endTime = 10000 * 24000; //convert milliseconds to clock ticks 
+
+        while(timer_get_ticks() - startTime < endTime){
+            if (is_data_available(1)){
+                nrf24_receive(rx_data);
+                printf("Received radar data.\n");
+            }
+        }
+
+        if(strlen((const char *)rx_data) == 0){
+            printf("No message recieved\n");
+            return;
+        }
+        //whatever we recieve we assume to be valid output to transmitted on the screen.
+        const int SCREEN_WIDTH = 40;  // Number of columns in console
+        const int SCREEN_HEIGHT = 20; // Number of rows in console
+
+        console_init(SCREEN_HEIGHT, SCREEN_WIDTH, gl_color(255, 255, 255), gl_color(0, 0, 0));
+        
+        //Displays the servo data for 10 seconds.
+        startTime = timer_get_ticks();
+        while(timer_get_ticks() - startTime < endTime){
+            radar_display((int *)rx_data);
+        }
+
+        return;
     }
 
     //int joystick_value = mcp3008_read_channel(0);  // read ADC (joystick is on ADC channel 0)
@@ -255,14 +294,14 @@ void motor_control_from_joystick(void) {
     	cur_dir = TURN_LEFT;
 
     }else if (x_value < startingRange - noMotion) {  // Turning left
-   	speed = ((startingRange - x_value) * 100) / 512;
+   	    speed = ((startingRange - x_value) * 100) / 512;
     	cur_dir = TURN_RIGHT;
     } else {
-	speed = 0;  // Neutral position
+	    speed = 0;  // Neutral position
     }
 
     if(speed == 0){
-	return; 
+	    return; 
     }
     
     nrf24_init();
@@ -273,14 +312,14 @@ void motor_control_from_joystick(void) {
     switch(cur_dir){
 
     case MOVE_FORWARD:{
-	//send a message	
-    	uint8_t tx_data[32];
-	tx_data[0] = '\0'; 
-	strlcat((char *)tx_data, "Forward", 32);
-	strlcat((char *)tx_data, " Speed: ", 32);
-	//New string = "Forward Speed: "
-	const char *dec = decimal_string(speed);
-	strlcat((char *)tx_data, dec, 32);
+        //send a message	
+        uint8_t tx_data[32];
+        tx_data[0] = '\0'; 
+        strlcat((char *)tx_data, "Forward", 32);
+        strlcat((char *)tx_data, " Speed: ", 32);
+        //New string = "Forward Speed: "
+        const char *dec = decimal_string(speed);
+        strlcat((char *)tx_data, dec, 32);
 
         if (nrf24_transmit(tx_data)) {
             printf("%s \n", tx_data);
@@ -291,14 +330,14 @@ void motor_control_from_joystick(void) {
         break;
     }
     case MOVE_BACKWARD: {
-	//send a message	
+	    //send a message	
     	uint8_t tx_data[32];
-	tx_data[0] = '\0'; 
-	strlcat((char *)tx_data, "Backward", 32);
-	strlcat((char *)tx_data, " Speed: ", 32);
-	//New string = "Forward Speed: "
-	const char *dec = decimal_string(speed);
-	strlcat((char *)tx_data, dec, 32);
+        tx_data[0] = '\0'; 
+        strlcat((char *)tx_data, "Backward", 32);
+        strlcat((char *)tx_data, " Speed: ", 32);
+        //New string = "Forward Speed: "
+        const char *dec = decimal_string(speed);
+        strlcat((char *)tx_data, dec, 32);
 
         if (nrf24_transmit(tx_data)) {
             printf("%s \n", tx_data);
@@ -309,14 +348,14 @@ void motor_control_from_joystick(void) {
         break;
     }
     case TURN_RIGHT: {
-	//send a message	
+	    //send a message	
     	uint8_t tx_data[32];
-	tx_data[0] = '\0'; 
-	strlcat((char *)tx_data, "Right", 32);
-	strlcat((char *)tx_data, " Speed: ", 32);
-	//New string = "Forward Speed: "
-	const char *dec = decimal_string(speed);
-	strlcat((char *)tx_data, dec, 32);
+        tx_data[0] = '\0'; 
+        strlcat((char *)tx_data, "Right", 32);
+        strlcat((char *)tx_data, " Speed: ", 32);
+        //New string = "Forward Speed: "
+        const char *dec = decimal_string(speed);
+        strlcat((char *)tx_data, dec, 32);
 
         if (nrf24_transmit(tx_data)) {
             printf("%s \n", tx_data);
@@ -327,14 +366,14 @@ void motor_control_from_joystick(void) {
         break;
     }
     case TURN_LEFT: {
-	//send a message	
-    	uint8_t tx_data[32];
-	tx_data[0] = '\0'; 
-	strlcat((char *)tx_data, "Left", 32);
-	strlcat((char *)tx_data, " Speed: ", 32);
-	//New string = "Forward Speed: "
-	const char *dec = decimal_string(speed);
-	strlcat((char *)tx_data, dec, 32);
+        //send a message	
+        uint8_t tx_data[32];
+        tx_data[0] = '\0'; 
+        strlcat((char *)tx_data, "Left", 32);
+        strlcat((char *)tx_data, " Speed: ", 32);
+        //New string = "Forward Speed: "
+        const char *dec = decimal_string(speed);
+        strlcat((char *)tx_data, dec, 32);
 
         if (nrf24_transmit(tx_data)) {
             printf("%s \n", tx_data);
@@ -345,12 +384,13 @@ void motor_control_from_joystick(void) {
         break;
     }
     default:
-	printf("Invalid cur_dir: %d \n", cur_dir);
-	//do nothing -> invalid cur_dir
-	return;
+        printf("Invalid cur_dir: %d \n", cur_dir);
+        //do nothing -> invalid cur_dir
+        return;
     }
 }
 
+//This helper function simply compares the first couple chars in two buffers and checks them against each other.
 static int checkFirstChars(const uint8_t* rx_data, const uint8_t* direction, size_t size){
      for(int i = 0; i < size; i++){
 	if(rx_data[i] != direction[i]){
@@ -360,7 +400,7 @@ static int checkFirstChars(const uint8_t* rx_data, const uint8_t* direction, siz
 
      return 1; 
 }
-
+//This helper function goes through an RX buffer and returned the speed from the message.
 static unsigned int grabSpeed(uint8_t* rx_data){
      int max = strlen((const char*)rx_data);
      uint8_t *numPtr = NULL;
@@ -383,17 +423,38 @@ void motorDriveRecieve (void){
     	nrf24_receive(rx_data);
         printf("Received: %s\n", rx_data);
     }else{
-	//printf("Waiting for transmission...\n");
-	return;
+	    return;
     }
 
     uint8_t Forward[] = "Forward Speed: ";
     uint8_t Backward[] = "Backward Speed: ";
     uint8_t Right[] = "Right Speed: ";
     uint8_t Left[] = "Left Speed: ";
+    uint8_t Servo[] = "Activate Radar Scan";
 
     unsigned int speed = 0;
-    if(checkFirstChars(rx_data, Forward, strlen((const char*)Forward)) == 1){
+    if(checkFirstChars(rx_data, Servo, strlen((const char*)Servo)) == 1){
+        //This should start the servo action. 
+        //We should collect the ultrasonic sensor data and transmit it back to the
+        //The remote controller
+        //The radar function memory allocated memory so it is our responsibility to free it after we are 
+        //done with the pointer
+        int* mDistance = radar_scan(); // -> this fuction should move the servo and return a pointer to distance data.
+        nrf24_init();
+        uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
+        nrf24_set_tx_mode(tx_address, 10);
+        uint8_t tx_servoData[32];
+        memcpy(tx_servoData, mDistance, 32);
+        free(mDistance);
+
+        if (nrf24_transmit(tx_servoData)) {
+            printf("Sent: Radar data\n");
+        } else {
+            printf("Transmission failed\n");
+            return; //if we fail we want to exit immediatley.
+        }
+
+    }else if(checkFirstChars(rx_data, Forward, strlen((const char*)Forward)) == 1){
      	speed = grabSpeed(rx_data);
         printf("I ran! setting pwm duty now!\n");
         pwm_set_duty(PWM7, speed);  // Set Motor A speed
@@ -426,9 +487,8 @@ void motorDriveRecieve (void){
         pwm_set_duty(PWM2, speed);  // Set Motor B speed
         drive_spin_left_time(500);   // spin turn left for 10 ms. 
         printf("I am going Left, Speed: %d\n", speed);
-        return; 
-
+        return;
     }else{
-	return;
+	    return;
     }
 }

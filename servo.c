@@ -10,10 +10,7 @@ void servo_init(pwm_channel_id_t ch, gpio_id_t pin){
 
     int freq = 50; // 50 Hz
     pwm_config_channel(ch, pin, freq, false);
-
 }
-
-
 
 void servo_set_angle(pwm_channel_id_t ch, int angle) {
     if (angle < 0) angle = 0;
