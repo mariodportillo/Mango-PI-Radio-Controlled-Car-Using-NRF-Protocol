@@ -52,13 +52,11 @@ void switchNRF(int MODE){
    if(MODE == 1){
        nrf24_init();
        nrf24_set_tx_mode(address, 10);
-       module.shell_printf("Succesfully switched to a Transmitter.\n");
        module.transmitInit = 1;
        module.recieverInit = 0;
    }else if(MODE == 0){
        nrf24_init();
        nrf24_set_rx_mode(address, 10);
-       module.shell_printf("Succesfully Switched to a  Reciever.\n");
        module.recieverInit = 1;
        module.transmitInit = 0;
    }
@@ -170,6 +168,7 @@ int reciever_mode(){
     unsigned long endTime = 10000 * 24000; //convert milliseconds to clock ticks 
     unsigned long lastPrint = startTime;
 
+    module.shell_printf("Waiting for data...\n");
     while(timer_get_ticks() - startTime < endTime){
     	if (is_data_available(1)){
 	      nrf24_receive(rx_data);
@@ -179,13 +178,81 @@ int reciever_mode(){
 	}
 
 	if(timer_get_ticks() - lastPrint >= 1000 * 24000){
-    	   module.shell_printf("Waiting for data...\n");
 	   lastPrint = timer_get_ticks();
 	}
     }
 
     module.shell_printf("No messages were recieved.\n");
     return -1;
+}
+
+void shell_bellRC(void) {
+    uart_putchar('\a');
+}
+
+static void back_spaceRC(char buf[]){
+    size_t index = strlen(buf);
+    buf[index] = '\0';
+    module.shell_printf("%c", '\b');
+    module.shell_printf("%c", ' ');
+    module.shell_printf("%c", '\b'); 
+}
+
+int shell_readlineRC(char buf[], size_t bufsize) {
+    input_fn_t rawInput = module.shell_read; 
+    char input = rawInput(); 
+    
+    memset(buf, '\0', bufsize); // we init our buffer to be empty 
+    size_t charsAdded = 0; 
+
+    while(input != '\n'){
+        if(charsAdded == (bufsize - 1)){
+            shell_bellRC();
+            break;
+        }
+
+        if (input <= 0x7f && input != '\b'){
+            buf[charsAdded++] = input;
+            module.shell_printf("%c", input);
+        }else if(input == '\b' && charsAdded != 0){
+           back_spaceRC(buf);
+           charsAdded--;  
+        }else if(input == '\b' && charsAdded == 0){
+           shell_bellRC(); 
+        }else if(input == PS2_KEY_ESC){
+	   return 0;
+	} 
+
+        input = rawInput(); 
+    }
+
+    module.shell_printf("\n");
+    buf[charsAdded] = '\0'; // Ensure buffer is null-terminated
+    return 1;
+}
+
+int runNRF(){ 
+    module.shell_printf("Welcome to the NRF Program.\nHave fun texting back and forth between PIs!\n");
+    module.shell_printf("Press ESC to terminate this program and go back to normal shell.\n");
+    module.shell_printf("Remember to type on your PS/2 keyboard!\n");
+    module.shell_printf("*************************************************************************\n");
+
+    while(1){
+    	char line[32] = {0};
+    	module.shell_printf("NRF> ");
+
+    	if(shell_readlineRC(line, sizeof(line)) == 0){
+		module.shell_printf("\n");
+		return 0; 
+	}
+
+	const char *argv[] = {"tm", line}; 
+	transmit_message(2, argv);
+	module.shell_printf("\n");
+	reciever_mode();
+    }
+
+    return 0;
 }
 
 static const command_t commands[] = {
@@ -202,7 +269,8 @@ static const command_t commands[] = {
     {"recieve", "rc", "enters reciever mode and will wait 10 seconds for a message to come through", reciever_mode},
     {"rc", "rc", "enters reciever mode and will wait 10 seconds for a message to come through", reciever_mode},
     {"rcInit", "rcInit", "this will initialize the NRF on mangoPi to be a receiver", rcInit}, 
-    {"ri", "rcInit", "this will initialize the NRF on mangoPi to be a receiver", rcInit} 
+    {"ri", "rcInit", "this will initialize the NRF on mangoPi to be a receiver", rcInit},
+    {"runNRF", "runNRF", "this will run the NRF program which allows for constant back and forth communication", runNRF}
 };
 
 
@@ -319,6 +387,7 @@ int cmd_help(int argc, const char *argv[]) {
        module.shell_printf("tm                 transmits the message over radio waves to any NRF listening\n"); 
        module.shell_printf("rcInit             initializes this mango pi to be reciever\n");
        module.shell_printf("rc                 enters reciever mode and will wait 10 seconds for a message to come through\n");
+       module.shell_printf("runNRF             this will run the NRF program which allows for constant back and forth communication\n");
        return 0;
     }
 
@@ -349,6 +418,9 @@ int cmd_help(int argc, const char *argv[]) {
     }else if((strcmp(argv[1], "rcInit") == 0 || strcmp(argv[1], "ri") == 0)){
        module.shell_printf("rcInit             initializes this mango pi to be reciever\n");
        return 0;
+    }else if((strcmp(argv[1], "runNRF") == 0)){
+       module.shell_printf("runNRF             this will run the NRF program which allows for constant back and forth communication\n");
+       return 0; 
     }
 
     module.shell_printf("error: no such command '%s'\n", argv[1]);

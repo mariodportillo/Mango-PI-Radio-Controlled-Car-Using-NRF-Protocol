@@ -193,7 +193,8 @@ static const char *decimal_string(long val) {
 }
 
 //End of Mario's Code.
-#define DEBOUNCE_DELAY_TICKS (10 * 1000 * 24)
+
+#define DEBOUNCE_DELAY_TICKS (10 * 1000 * 24) //10 ms delay
 static volatile uint32_t lastTime = 0; 
 
 static bool checkDebounce(void){
