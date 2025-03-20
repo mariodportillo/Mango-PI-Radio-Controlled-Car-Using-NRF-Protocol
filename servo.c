@@ -32,7 +32,7 @@ void servo_set_angle(pwm_channel_id_t ch, int angle) {
 // int main(void) {
 //     servo_init(PWM4, GPIO_PB1);  
 //     uart_init();
-    
+//     printf("I ran\n");
 //     while (1) {
 //         servo_set_angle(PWM4, 0);    // Move to 0°
 //         timer_delay_ms(1000);

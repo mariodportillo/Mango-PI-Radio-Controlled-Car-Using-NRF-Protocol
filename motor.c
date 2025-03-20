@@ -457,8 +457,12 @@ void motorDriveRecieve (void){
             printf("Sent: Radar distances\n");
         } else {
             printf("Transmission failed\n");
-            return; //if we fail we want to exit immediatley.
+            //if we fail we want to exit immediatley.
         }
+        nrf24_init();
+        uint8_t rx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
+        nrf24_set_rx_mode(rx_address, 10);
+        return;
 
     }else if(checkFirstChars(rx_data, Forward, strlen((const char*)Forward)) == 1){
      	speed = grabSpeed(rx_data);
