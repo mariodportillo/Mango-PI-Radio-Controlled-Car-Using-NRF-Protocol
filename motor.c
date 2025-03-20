@@ -502,6 +502,7 @@ void motorDriveRecieve (void){
         //The remote controller
         //The radar function memory allocated memory so it is our responsibility to free it after we are 
         //done with the pointer
+        all_stop();
         uint8_t* mDistance = radar_scan(); // -> this fuction should move the servo and return a pointer to distance data.
         nrf24_init();
         uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
@@ -512,7 +513,7 @@ void motorDriveRecieve (void){
 
         if (nrf24_transmit(tx_servoData)) {
             printf("Sent: Radar distances\n");
-	    return;
+	    
         } else {
             printf("Transmission failed\n");
             //if we fail we want to exit immediatley.
