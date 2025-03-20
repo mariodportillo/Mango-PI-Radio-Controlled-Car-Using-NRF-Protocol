@@ -10,10 +10,31 @@
 #include "gpio_extra.h"
 #include "display.h"
 #include "malloc.h"
+#include "gpio_interrupt.h"
+
+static volatile int gCount = 0;
+static void button_pressed(void *aux_data) {
+    gpio_id_t button = *(gpio_id_t *)aux_data;
+    gpio_interrupt_clear(button);
+    gCount++;
+    uart_putstring("Interruption occured.\n");
+}
+
 
 void motor_init(void) {
     gpio_set_input(BUTTON);
     gpio_set_pullup(BUTTON);
+
+    gpio_id_t killSwitch = GPIO_PB2;
+    gpio_set_input(killSwitch);
+    gpio_set_pullup(killSwitch);
+
+    interrupts_init();
+    gpio_interrupt_init();
+    gpio_interrupt_config(killSwitch, GPIO_INTERRUPT_NEGATIVE_EDGE, true);
+    gpio_interrupt_register_handler(killSwitch, button_pressed, &killSwitch);
+    gpio_interrupt_enable(killSwitch);
+
 
     pwm_init();  
     pwm_config_channel(PWM7, ENA_PIN, 10000, false); // 10kHz frequency for Motor A

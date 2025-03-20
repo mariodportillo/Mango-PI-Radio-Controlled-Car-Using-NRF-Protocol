@@ -94,6 +94,7 @@ void test_joystick_to_motor(){
   while(1){
      motor_control_from_joystick();
      timer_delay_ms(300);
+     printf("Out of the loop.");  
   }
 }
 
@@ -114,6 +115,7 @@ void main(void){
 
     console_init(SCREEN_HEIGHT, SCREEN_WIDTH, gl_color(255, 255, 255), gl_color(0, 0, 0));
     motor_init();
+    interrupts_global_enable();
     test_joystick_to_motor();
 }
 
