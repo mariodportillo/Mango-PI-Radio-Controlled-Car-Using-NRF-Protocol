@@ -11,6 +11,7 @@
  #include "strings.h"
  #include "motor.h"
  #include "timer.h"
+#include "radar.h"
  
  uint8_t rx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
  uint8_t rx_data[32];
@@ -85,6 +86,7 @@ void test_receiver_motor(){
      
      //test_receiver_simple();
      motor_init();
+     radarInit();
      test_motor();
      // test_receiver_motor();
  }

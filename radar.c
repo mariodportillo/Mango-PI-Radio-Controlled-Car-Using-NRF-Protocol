@@ -15,15 +15,16 @@ void radarInit(void){
     us_init();
 }
 
-int* radar_scan() {
-    int* distance_data = malloc(NUM_ANGLES * sizeof(int));
+uint8_t* radar_scan() {
+    uint8_t* distance_data = malloc(NUM_ANGLES * sizeof(uint8_t));
+
 
     for (int i = 0; i < NUM_ANGLES; i++) {  // 0, 5, 10, ... 180
         int angle = i * STEP_SIZE;
         servo_set_angle(PWM4, angle);
         timer_delay_ms(250);  
         
-        int distance = sense_distance();
+        uint8_t distance = (uint8_t)sense_distance();
         distance_data[i] = distance;
     }
     return distance_data; 

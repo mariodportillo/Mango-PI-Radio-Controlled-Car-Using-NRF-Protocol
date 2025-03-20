@@ -223,16 +223,21 @@ static bool checkDebounce(void){
 void motor_control_from_joystick(void) {
     // check for button switch movement
     if(checkDebounce()){
-    	uint8_t tx_data[32];
-	    tx_data[0] = '\0'; 
-	    strlcat((char *)tx_data, "Activate Radar Scan", 32);
+    	nrf24_init();
+        uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
+        nrf24_set_tx_mode(tx_address, 10);
+        uint8_t tx_data[32];
 
-        if (nrf24_transmit(tx_data)) {
-            printf("Sent: \"%s\" \n", tx_data);
-        } else {
-            printf("Transmission failed\n");
-            return; //if we fail we want to exit immediatley.
-        }
+	tx_data[0] = '\0'; 
+	strlcat((char *)tx_data, "Activate Radar Scan", 32);
+	
+	int i = 0;
+	while(i == 0){
+            if (nrf24_transmit(tx_data)) {
+        	printf("Sent: \"%s\" \n", tx_data);
+		i = 1; 
+            }
+	}
         
         // After we transmit the command we want to then go into a receiver mode to 
         nrf24_init();
@@ -256,6 +261,7 @@ void motor_control_from_joystick(void) {
             printf("No message recieved\n");
             return;
         }
+
         //whatever we recieve we assume to be valid output to transmitted on the screen.
         const int SCREEN_WIDTH = 40;  // Number of columns in console
         const int SCREEN_HEIGHT = 20; // Number of rows in console
@@ -439,7 +445,7 @@ void motorDriveRecieve (void){
         //The remote controller
         //The radar function memory allocated memory so it is our responsibility to free it after we are 
         //done with the pointer
-        int* mDistance = radar_scan(); // -> this fuction should move the servo and return a pointer to distance data.
+        uint8_t* mDistance = radar_scan(); // -> this fuction should move the servo and return a pointer to distance data.
         nrf24_init();
         uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
         nrf24_set_tx_mode(tx_address, 10);
@@ -448,7 +454,7 @@ void motorDriveRecieve (void){
         free(mDistance);
 
         if (nrf24_transmit(tx_servoData)) {
-            printf("Sent: Radar data\n");
+            printf("Sent: Radar distances\n");
         } else {
             printf("Transmission failed\n");
             return; //if we fail we want to exit immediatley.
