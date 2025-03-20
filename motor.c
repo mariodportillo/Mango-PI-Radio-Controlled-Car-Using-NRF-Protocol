@@ -254,6 +254,7 @@ void motor_control_from_joystick(void) {
                 i = 1; 
             }
         }
+        mango_reboot();
         return;
     }
     if(checkDebounce(BUTTON)){
