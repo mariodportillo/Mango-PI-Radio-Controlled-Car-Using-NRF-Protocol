@@ -329,7 +329,7 @@ void motor_control_from_joystick(void) {
     int x_value = mcp3008_read_channel(X_CHANNEL); // const X_CHANNEL defined in the header file
     int y_value = mcp3008_read_channel(Y_CHANNEL); // const Y_CHANNEL defined in the header file
 
-    //printf("x: %d y: %d \n", x_value, y_value);
+    printf("x: %d y: %d \n", x_value, y_value);
 
     int speed = 0;     //(joystick_value * 100) / 1023; // -> needs to be between 0 and 100%
     motor_direction cur_dir = MOVE_FORWARD; // default direction is forward
