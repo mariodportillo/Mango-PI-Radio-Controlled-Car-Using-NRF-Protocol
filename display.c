@@ -10,9 +10,6 @@
 #include "radar.h"
 
 
-// TODO: pls remove. Only for testing
-#include "printf.h"
-
 // module-level variables
 static struct {
     color_t bg_color, fg_color;
@@ -71,18 +68,14 @@ void console_display(void){
             char ch = text[j][i];
             if (ch != ' '){
                 gl_draw_char(i * module.char_width, j * module.line_height , ch, module.fg_color);
-            }
-            
+            } 
         }
     }
  
     gl_swap_buffer();
 }
 
-void radar_display(int *distance_data) {
-    console_clear();
-    
-
+void radar_display(uint8_t *distance_data) {
     // Car is at bottom center
     int car_x = module.ncols / 2;
     int car_y = module.nrows - 1;
@@ -95,20 +88,17 @@ void radar_display(int *distance_data) {
     // Draw obstacles based on scanned distances
     for (int i = 0; i < NUM_ANGLES; i++) {
         int angle = i * STEP_SIZE;  // Convert index back to angle
-        int distance = distance_data[i];  // Read corresponding data
+        uint8_t distance = distance_data[i];  // Read corresponding data
     
         // Convert angle + distance into screen coordinates
-        int dx = (distance) * cos(angle * PI /180);  // Scale X
-        printf("angle: %d ", angle);
-        printf("dx: %d ", dx);
-        int dy = (distance) * sin(angle * PI /180); // Scale Y
-        printf("dy: %d \n", dy);
+        int dx = (distance) * cos(angle * 3.14 /180);  // Scale X
+        int dy = (distance) * sin(angle * 3.14 /180); // Scale Y
 
         int x = car_x + dx;
         int y = car_y - dy; // Moving upwards
 
         // Ensure within screen bounds
-        if (x >= 0 && x < module.ncols && y >= 0 && y < module.nrows) {
+        if (x >= 0 && x < module.ncols && y >= 0 && y < module.nrows && x != car_x && car_y != y) {
             text[y][x] = '*';
         }
     }

@@ -261,18 +261,13 @@ void motor_control_from_joystick(void) {
             printf("No message recieved\n");
             return;
         }
-
-        //whatever we recieve we assume to be valid output to transmitted on the screen.
-        const int SCREEN_WIDTH = 40;  // Number of columns in console
-        const int SCREEN_HEIGHT = 20; // Number of rows in console
-
-        console_init(SCREEN_HEIGHT, SCREEN_WIDTH, gl_color(255, 255, 255), gl_color(0, 0, 0));
+        
+        radar_display(rx_data);
         
         //Displays the servo data for 10 seconds.
-        startTime = timer_get_ticks();
-        while(timer_get_ticks() - startTime < endTime){
-            radar_display((int *)rx_data);
-        }
+        //startTime = timer_get_ticks();
+        //while(timer_get_ticks() - startTime < endTime){
+        //}
 
         return;
     }
@@ -282,10 +277,12 @@ void motor_control_from_joystick(void) {
     int x_value = mcp3008_read_channel(X_CHANNEL); // const X_CHANNEL defined in the header file
     int y_value = mcp3008_read_channel(Y_CHANNEL); // const Y_CHANNEL defined in the header file
 
+    printf("x: %d y: %d \n", x_value, y_value);
+
     int speed = 0;     //(joystick_value * 100) / 1023; // -> needs to be between 0 and 100%
     motor_direction cur_dir = MOVE_FORWARD; // default direction is forward
     int startingRange = 515; //these values can be adjusted
-    int noMotion = 30; // these values can be adjusted
+    int noMotion = 100; // these values can be adjusted
 
     if (y_value > startingRange + noMotion) {  // Moving forward
     	speed = ((y_value - startingRange) * 100) / 511; //gives us a value between 0 and 100
@@ -455,6 +452,7 @@ void motorDriveRecieve (void){
 
         if (nrf24_transmit(tx_servoData)) {
             printf("Sent: Radar distances\n");
+	    return;
         } else {
             printf("Transmission failed\n");
             return; //if we fail we want to exit immediatley.
@@ -462,7 +460,6 @@ void motorDriveRecieve (void){
 
     }else if(checkFirstChars(rx_data, Forward, strlen((const char*)Forward)) == 1){
      	speed = grabSpeed(rx_data);
-        printf("I ran! setting pwm duty now!\n");
         pwm_set_duty(PWM7, speed);  // Set Motor A speed
         //pwm_set_freq(PWM7, 10000);
         pwm_set_duty(PWM2, speed);  // Set Motor B speed
