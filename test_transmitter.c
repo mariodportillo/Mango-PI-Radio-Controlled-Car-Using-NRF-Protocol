@@ -93,8 +93,7 @@ void test_read_channel_mcp(){
 void test_joystick_to_motor(){
   while(1){
      motor_control_from_joystick();
-     timer_delay_ms(300);
-     printf("Out of the loop.");  
+     timer_delay_ms(300); 
   }
 }
 
