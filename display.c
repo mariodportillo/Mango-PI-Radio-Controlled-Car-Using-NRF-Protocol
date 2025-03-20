@@ -79,7 +79,7 @@ void radar_display(uint8_t *distance_data) {
     // Car is at bottom center
     int car_x = module.ncols / 2;
     int car_y = module.nrows - 1;
-
+    console_clear();
 
     char (*text)[module.ncols] = (char (*)[module.ncols]) module.text_grid; 
     text[car_y][car_x] = '^';
