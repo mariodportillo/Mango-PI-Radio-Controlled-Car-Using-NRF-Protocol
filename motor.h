@@ -13,6 +13,7 @@
 #define Y_CHANNEL 1
 
 #define BUTTON GPIO_PB3
+#define KILL_SWITCH GPIO_PB2
 
 typedef enum {
     MOVE_FORWARD = 0,

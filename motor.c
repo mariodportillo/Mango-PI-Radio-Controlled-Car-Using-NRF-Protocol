@@ -10,6 +10,7 @@
 #include "gpio_extra.h"
 #include "display.h"
 #include "malloc.h"
+#include "interrupts.h"
 #include "gpio_interrupt.h"
 
 static volatile int gCount = 0;
@@ -25,15 +26,9 @@ void motor_init(void) {
     gpio_set_input(BUTTON);
     gpio_set_pullup(BUTTON);
 
-    gpio_id_t killSwitch = GPIO_PB2;
-    gpio_set_input(killSwitch);
-    gpio_set_pullup(killSwitch);
+    gpio_set_input(KILL_SWITCH);
+    gpio_set_pullup(KILL_SWITCH);
 
-    interrupts_init();
-    gpio_interrupt_init();
-    gpio_interrupt_config(killSwitch, GPIO_INTERRUPT_NEGATIVE_EDGE, true);
-    gpio_interrupt_register_handler(killSwitch, button_pressed, &killSwitch);
-    gpio_interrupt_enable(killSwitch);
 
 
     pwm_init();  
@@ -221,10 +216,10 @@ static const char *decimal_string(long val) {
 static volatile uint32_t lastTime = 0; 
 //This below helper function determines if the input is just noise
 // or if it is a valid gpio input interrputed by the mango PI. 
-static bool checkDebounce(void){
+static bool checkDebounce(gpio_id_t button){
     static int lastState = 1;
     uint32_t curTime = timer_get_ticks();  // Get current time in ticks
-    int curState = gpio_read(BUTTON);
+    int curState = gpio_read(button);
 
     if (curState == 0 && lastState == 1) {
         // Button state changed (pressed down)
@@ -243,22 +238,40 @@ static bool checkDebounce(void){
 // i.e a while loop.
 void motor_control_from_joystick(void) {
     // check for button switch movement
-    if(checkDebounce()){
+    if(checkDebounce(KILL_SWITCH)){
+        nrf24_init();
+        uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
+        nrf24_set_tx_mode(tx_address, 10);
+        uint8_t tx_data[32];
+
+        tx_data[0] = '\0'; 
+        strlcat((char *)tx_data, "All Stop", 32);
+	
+        int i = 0;
+        while(i == 0){
+            if (nrf24_transmit(tx_data)) {
+                printf("Sent: \"%s\" \n", tx_data);
+                i = 1; 
+            }
+        }
+        return;
+    }
+    if(checkDebounce(BUTTON)){
     	nrf24_init();
         uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
         nrf24_set_tx_mode(tx_address, 10);
         uint8_t tx_data[32];
 
-	tx_data[0] = '\0'; 
-	strlcat((char *)tx_data, "Activate Radar Scan", 32);
+        tx_data[0] = '\0'; 
+        strlcat((char *)tx_data, "Activate Radar Scan", 32);
 	
-	int i = 0;
-	while(i == 0){
-            if (nrf24_transmit(tx_data)) {
-        	printf("Sent: \"%s\" \n", tx_data);
-		i = 1; 
-            }
-	}
+        int i = 0;
+        while(i == 0){
+                if (nrf24_transmit(tx_data)) {
+                printf("Sent: \"%s\" \n", tx_data);
+            i = 1; 
+                }
+        }
         
         // After we transmit the command we want to then go into a receiver mode to 
         nrf24_init();
@@ -455,9 +468,14 @@ void motorDriveRecieve (void){
     uint8_t Right[] = "Right Speed: ";
     uint8_t Left[] = "Left Speed: ";
     uint8_t Servo[] = "Activate Radar Scan";
+    uint8_t Stop[] = "All Stop";
 
     unsigned int speed = 0;
-    if(checkFirstChars(rx_data, Servo, strlen((const char*)Servo)) == 1){
+    if (checkFirstChars(rx_data, Stop, strlen((const char*)Stop)) == 1){
+        all_stop();
+        printf("I just stopped!\n");
+    }
+    else if(checkFirstChars(rx_data, Servo, strlen((const char*)Servo)) == 1){
         //This should start the servo action. 
         //We should collect the ultrasonic sensor data and transmit it back to the
         //The remote controller
