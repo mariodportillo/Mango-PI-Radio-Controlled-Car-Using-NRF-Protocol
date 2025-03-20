@@ -93,11 +93,7 @@ void test_read_channel_mcp(){
 void test_joystick_to_motor(){
   while(1){
      motor_control_from_joystick();
-<<<<<<< HEAD
-     timer_delay_ms(300);
-=======
      timer_delay_ms(300); 
->>>>>>> ea82c25695508e7edd5915c2ff1d11f6cfa76f16
   }
 }
 
