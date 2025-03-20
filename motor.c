@@ -1,3 +1,9 @@
+/*
+* CS 107e 
+* Authors: Mario Portillo and Sahan Samarakoon
+* Date: 15th March 2025
+*/
+
 #include "pwm.h"
 #include "gpio.h"
 #include "timer.h"
@@ -13,7 +19,12 @@
 #include "interrupts.h"
 #include "gpio_interrupt.h"
 
-static volatile int stop = 0;
+
+/*
+* These below global variables are necessary for 
+* interruopts to occur and to be tracked by the controller.  
+*/
+
 static volatile int transmit = 0;
 static gpio_id_t killSwitch = KILL_SWITCH;
 static gpio_id_t buttonTransmit = BUTTON;
@@ -21,8 +32,23 @@ static gpio_id_t buttonTransmit = BUTTON;
 static void button_stop_pressed(void *aux_data) {
     gpio_id_t button = *(gpio_id_t *)aux_data;
     gpio_interrupt_clear(button);
-    stop = 1;
     uart_putstring("STOP!!!\n");
+    nrf24_init();
+    uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
+    nrf24_set_tx_mode(tx_address, 10);
+    uint8_t tx_data[32];
+
+    tx_data[0] = '\0'; 
+    strlcat((char *)tx_data, "All Stop", 32);
+
+    int i = 0;
+    while(i == 0){
+        if (nrf24_transmit(tx_data)) {
+            printf("Sent: \"%s\" \n", tx_data);
+            i = 1; 
+        }
+    }
+    mango_reboot();
 }
 
 static void button_transmit_pressed(void *aux_data) {
@@ -31,7 +57,6 @@ static void button_transmit_pressed(void *aux_data) {
     transmit = 1;
     uart_putstring("Transmit servo command.\n");
 }
-
 
 void motor_init(void) {
     gpio_set_input(buttonTransmit);
@@ -231,52 +256,29 @@ static const char *decimal_string(long val) {
 
 //End of Mario's Code.
 
-#define DEBOUNCE_DELAY_TICKS (10 * 1000 * 24) //10 ms delay
-static volatile uint32_t lastTime = 0; 
-//This below helper function determines if the input is just noise
-// or if it is a valid gpio input interrputed by the mango PI. 
-static bool checkDebounce(gpio_id_t button){
-    static int lastState = 1;
-    uint32_t curTime = timer_get_ticks();  // Get current time in ticks
-    int curState = gpio_read(button);
-
-    if (curState == 0 && lastState == 1) {
-        // Button state changed (pressed down)
-        if ((curTime - lastTime) >= DEBOUNCE_DELAY_TICKS) {
-            // Update last press time
-            lastTime = curTime;
-            return true;
-        }
-    }
-
-    lastState = curState;;
-    return false;
-}
-
 // This below function must be continously called in order to work properly
 // i.e a while loop.
+/**
+ * motor_control_from_joystick: Registers user input through the switch and the
+ * joystick on the controller. This function takes care of transmitting the correct
+ * command to then be recieved and processed by the receiver i.e the car. 
+ * 
+ * Potential Actions:
+ * Yellow Button Pressed -> "All Stop" will be transmitted to the reciever and the controller mango_reboots().
+ * 
+ * Switch button is pressed on joystick -> "Activate Radar Scan" will be transmitted to the reciever and data will
+ * be sent back to the controller and outputted on the screen.
+ * 
+ * Normal Joystick movement -> specific directions will be transmitted to the reciever in the form of "Direction Speed: "
+ * the speed is determined by the positioning of the joystick and so is the direction.
+ * Up = forward
+ * Left = left
+ * Right = right
+ * Back = backwards
+ * 
+ **/
 void motor_control_from_joystick(void) {
     // check for button switch movement
-    if(stop == 1){
-        nrf24_init();
-        uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
-        nrf24_set_tx_mode(tx_address, 10);
-        uint8_t tx_data[32];
-
-        tx_data[0] = '\0'; 
-        strlcat((char *)tx_data, "All Stop", 32);
-	
-        int i = 0;
-        while(i == 0){
-            if (nrf24_transmit(tx_data)) {
-                printf("Sent: \"%s\" \n", tx_data);
-                i = 1; 
-            }
-        }
-        stop = 0;
-        mango_reboot();
-        return;
-    }
     if(transmit == 1){
     	transmit = 0;
         nrf24_init();
@@ -464,7 +466,11 @@ static unsigned int grabSpeed(uint8_t* rx_data){
      }
      return strtonum((char *)numPtr, NULL);
 }
-
+/**
+ * motorDriveRecieve: The reciever on the car which will mostly recieve function commands from the other PI
+ * using NRF communication to then move the motors on the recievers end. 
+ * 
+ **/
 void motorDriveRecieve (void){
     uint8_t rx_data[32];
     memset(rx_data, 0x7E, 32);
@@ -552,5 +558,5 @@ void motorDriveRecieve (void){
     }else{
 	    return;
     }
-    
+
 }
