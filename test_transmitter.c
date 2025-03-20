@@ -109,6 +109,10 @@ void main(void){
     //test_read_channel_mcp();
     //test_transmission_simple();
     //test_transmission();
+    const int SCREEN_WIDTH = 40;  // Number of columns in console
+    const int SCREEN_HEIGHT = 20; // Number of rows in console
+
+    console_init(SCREEN_HEIGHT, SCREEN_WIDTH, gl_color(255, 255, 255), gl_color(0, 0, 0));
     motor_init();
     test_joystick_to_motor();
 }
