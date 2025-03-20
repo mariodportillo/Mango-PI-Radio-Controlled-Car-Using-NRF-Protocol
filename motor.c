@@ -1,3 +1,9 @@
+/*
+* CS 107e 
+* Authors: Mario Portillo and Sahan Samarakoon
+* Date: 15th March 2025
+*/
+
 #include "pwm.h"
 #include "gpio.h"
 #include "timer.h"
@@ -13,23 +19,61 @@
 #include "interrupts.h"
 #include "gpio_interrupt.h"
 
-static volatile int gCount = 0;
-static void button_pressed(void *aux_data) {
+
+/*
+* These below global variables are necessary for 
+* interruopts to occur and to be tracked by the controller.  
+*/
+
+static volatile int transmit = 0;
+static gpio_id_t killSwitch = KILL_SWITCH;
+static gpio_id_t buttonTransmit = BUTTON;
+
+static void button_stop_pressed(void *aux_data) {
     gpio_id_t button = *(gpio_id_t *)aux_data;
     gpio_interrupt_clear(button);
-    gCount++;
-    uart_putstring("Interruption occured.\n");
+    uart_putstring("STOP!!!\n");
+    nrf24_init();
+    uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
+    nrf24_set_tx_mode(tx_address, 10);
+    uint8_t tx_data[32];
+
+    tx_data[0] = '\0'; 
+    strlcat((char *)tx_data, "All Stop", 32);
+
+    int i = 0;
+    while(i == 0){
+        if (nrf24_transmit(tx_data)) {
+            printf("Sent: \"%s\" \n", tx_data);
+            i = 1; 
+        }
+    }
+    mango_reboot();
 }
 
+static void button_transmit_pressed(void *aux_data) {
+    gpio_id_t button = *(gpio_id_t *)aux_data;
+    gpio_interrupt_clear(button);
+    transmit = 1;
+    uart_putstring("Transmit servo command.\n");
+}
 
 void motor_init(void) {
-    gpio_set_input(BUTTON);
-    gpio_set_pullup(BUTTON);
+    gpio_set_input(buttonTransmit);
+    gpio_set_pullup(buttonTransmit);
+    
+    gpio_set_input(killSwitch);
+    gpio_set_pullup(killSwitch);
+    interrupts_init();
+    gpio_interrupt_init();
 
-    gpio_set_input(KILL_SWITCH);
-    gpio_set_pullup(KILL_SWITCH);
+    gpio_interrupt_config(buttonTransmit, GPIO_INTERRUPT_NEGATIVE_EDGE, true);
+    gpio_interrupt_register_handler(buttonTransmit, button_transmit_pressed, &buttonTransmit);
+    gpio_interrupt_enable(buttonTransmit);
 
-
+    gpio_interrupt_config(killSwitch, GPIO_INTERRUPT_NEGATIVE_EDGE, true);
+    gpio_interrupt_register_handler(killSwitch, button_stop_pressed, &killSwitch);
+    gpio_interrupt_enable(killSwitch);
 
     pwm_init();  
     pwm_config_channel(PWM7, ENA_PIN, 10000, false); // 10kHz frequency for Motor A
@@ -212,53 +256,32 @@ static const char *decimal_string(long val) {
 
 //End of Mario's Code.
 
-#define DEBOUNCE_DELAY_TICKS (10 * 1000 * 24) //10 ms delay
-static volatile uint32_t lastTime = 0; 
-//This below helper function determines if the input is just noise
-// or if it is a valid gpio input interrputed by the mango PI. 
-static bool checkDebounce(gpio_id_t button){
-    static int lastState = 1;
-    uint32_t curTime = timer_get_ticks();  // Get current time in ticks
-    int curState = gpio_read(button);
-
-    if (curState == 0 && lastState == 1) {
-        // Button state changed (pressed down)
-        if ((curTime - lastTime) >= DEBOUNCE_DELAY_TICKS) {
-            // Update last press time
-            lastTime = curTime;
-            return true;
-        }
-    }
-
-    lastState = curState;;
-    return false;
-}
-
 // This below function must be continously called in order to work properly
 // i.e a while loop.
+/**
+ * motor_control_from_joystick: Registers user input through the switch and the
+ * joystick on the controller. This function takes care of transmitting the correct
+ * command to then be recieved and processed by the receiver i.e the car. 
+ * 
+ * Potential Actions:
+ * Yellow Button Pressed -> "All Stop" will be transmitted to the reciever and the controller mango_reboots().
+ * 
+ * Switch button is pressed on joystick -> "Activate Radar Scan" will be transmitted to the reciever and data will
+ * be sent back to the controller and outputted on the screen.
+ * 
+ * Normal Joystick movement -> specific directions will be transmitted to the reciever in the form of "Direction Speed: "
+ * the speed is determined by the positioning of the joystick and so is the direction.
+ * Up = forward
+ * Left = left
+ * Right = right
+ * Back = backwards
+ * 
+ **/
 void motor_control_from_joystick(void) {
     // check for button switch movement
-    if(checkDebounce(KILL_SWITCH)){
+    if(transmit == 1){
+    	transmit = 0;
         nrf24_init();
-        uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
-        nrf24_set_tx_mode(tx_address, 10);
-        uint8_t tx_data[32];
-
-        tx_data[0] = '\0'; 
-        strlcat((char *)tx_data, "All Stop", 32);
-	
-        int i = 0;
-        while(i == 0){
-            if (nrf24_transmit(tx_data)) {
-                printf("Sent: \"%s\" \n", tx_data);
-                i = 1; 
-            }
-        }
-        mango_reboot();
-        return;
-    }
-    if(checkDebounce(BUTTON)){
-    	nrf24_init();
         uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
         nrf24_set_tx_mode(tx_address, 10);
         uint8_t tx_data[32];
@@ -268,10 +291,10 @@ void motor_control_from_joystick(void) {
 	
         int i = 0;
         while(i == 0){
-                if (nrf24_transmit(tx_data)) {
+            if (nrf24_transmit(tx_data)) {
                 printf("Sent: \"%s\" \n", tx_data);
-            i = 1; 
-                }
+                i = 1; 
+            }
         }
         
         // After we transmit the command we want to then go into a receiver mode to 
@@ -298,12 +321,6 @@ void motor_control_from_joystick(void) {
         }
         
         radar_display(rx_data);
-        
-        //Displays the servo data for 10 seconds.
-        //startTime = timer_get_ticks();
-        //while(timer_get_ticks() - startTime < endTime){
-        //}
-
         return;
     }
 
@@ -348,83 +365,82 @@ void motor_control_from_joystick(void) {
     
 
     switch(cur_dir){
+        case MOVE_FORWARD:{
+            //send a message	
+            uint8_t tx_data[32];
+            tx_data[0] = '\0'; 
+            strlcat((char *)tx_data, "Forward", 32);
+            strlcat((char *)tx_data, " Speed: ", 32);
+            //New string = "Forward Speed: "
+            const char *dec = decimal_string(speed);
+            strlcat((char *)tx_data, dec, 32);
 
-    case MOVE_FORWARD:{
-        //send a message	
-        uint8_t tx_data[32];
-        tx_data[0] = '\0'; 
-        strlcat((char *)tx_data, "Forward", 32);
-        strlcat((char *)tx_data, " Speed: ", 32);
-        //New string = "Forward Speed: "
-        const char *dec = decimal_string(speed);
-        strlcat((char *)tx_data, dec, 32);
+            if (nrf24_transmit(tx_data)) {
+                printf("%s \n", tx_data);
+            } else {
+                printf("Transmission failed\n");
+            }
 
-        if (nrf24_transmit(tx_data)) {
-            printf("%s \n", tx_data);
-        } else {
-            printf("Transmission failed\n");
+            break;
         }
+        case MOVE_BACKWARD: {
+            //send a message	
+            uint8_t tx_data[32];
+            tx_data[0] = '\0'; 
+            strlcat((char *)tx_data, "Backward", 32);
+            strlcat((char *)tx_data, " Speed: ", 32);
+            //New string = "Forward Speed: "
+            const char *dec = decimal_string(speed);
+            strlcat((char *)tx_data, dec, 32);
 
-        break;
-    }
-    case MOVE_BACKWARD: {
-	    //send a message	
-    	uint8_t tx_data[32];
-        tx_data[0] = '\0'; 
-        strlcat((char *)tx_data, "Backward", 32);
-        strlcat((char *)tx_data, " Speed: ", 32);
-        //New string = "Forward Speed: "
-        const char *dec = decimal_string(speed);
-        strlcat((char *)tx_data, dec, 32);
+            if (nrf24_transmit(tx_data)) {
+                printf("%s \n", tx_data);
+            } else {
+                printf("Transmission failed\n");
+            }
 
-        if (nrf24_transmit(tx_data)) {
-            printf("%s \n", tx_data);
-        } else {
-            printf("Transmission failed\n");
+            break;
         }
+        case TURN_RIGHT: {
+            //send a message	
+            uint8_t tx_data[32];
+            tx_data[0] = '\0'; 
+            strlcat((char *)tx_data, "Right", 32);
+            strlcat((char *)tx_data, " Speed: ", 32);
+            //New string = "Forward Speed: "
+            const char *dec = decimal_string(speed);
+            strlcat((char *)tx_data, dec, 32);
 
-        break;
-    }
-    case TURN_RIGHT: {
-	    //send a message	
-    	uint8_t tx_data[32];
-        tx_data[0] = '\0'; 
-        strlcat((char *)tx_data, "Right", 32);
-        strlcat((char *)tx_data, " Speed: ", 32);
-        //New string = "Forward Speed: "
-        const char *dec = decimal_string(speed);
-        strlcat((char *)tx_data, dec, 32);
+            if (nrf24_transmit(tx_data)) {
+                printf("%s \n", tx_data);
+            } else {
+                printf("Transmission failed\n");
+            }
 
-        if (nrf24_transmit(tx_data)) {
-            printf("%s \n", tx_data);
-        } else {
-            printf("Transmission failed\n");
+            break;
         }
+        case TURN_LEFT: {
+            //send a message	
+            uint8_t tx_data[32];
+            tx_data[0] = '\0'; 
+            strlcat((char *)tx_data, "Left", 32);
+            strlcat((char *)tx_data, " Speed: ", 32);
+            //New string = "Forward Speed: "
+            const char *dec = decimal_string(speed);
+            strlcat((char *)tx_data, dec, 32);
 
-        break;
-    }
-    case TURN_LEFT: {
-        //send a message	
-        uint8_t tx_data[32];
-        tx_data[0] = '\0'; 
-        strlcat((char *)tx_data, "Left", 32);
-        strlcat((char *)tx_data, " Speed: ", 32);
-        //New string = "Forward Speed: "
-        const char *dec = decimal_string(speed);
-        strlcat((char *)tx_data, dec, 32);
+            if (nrf24_transmit(tx_data)) {
+                printf("%s \n", tx_data);
+            } else {
+                printf("Transmission failed\n");
+            }
 
-        if (nrf24_transmit(tx_data)) {
-            printf("%s \n", tx_data);
-        } else {
-            printf("Transmission failed\n");
+            break;
         }
-
-        break;
-    }
-    default:
-        printf("Invalid cur_dir: %d \n", cur_dir);
-        //do nothing -> invalid cur_dir
-        return;
+        default:
+            printf("Invalid cur_dir: %d \n", cur_dir);
+            //do nothing -> invalid cur_dir
+            return;
     }
 }
 
@@ -450,7 +466,11 @@ static unsigned int grabSpeed(uint8_t* rx_data){
      }
      return strtonum((char *)numPtr, NULL);
 }
-
+/**
+ * motorDriveRecieve: The reciever on the car which will mostly recieve function commands from the other PI
+ * using NRF communication to then move the motors on the recievers end. 
+ * 
+ **/
 void motorDriveRecieve (void){
     uint8_t rx_data[32];
     memset(rx_data, 0x7E, 32);
@@ -475,8 +495,8 @@ void motorDriveRecieve (void){
     if (checkFirstChars(rx_data, Stop, strlen((const char*)Stop)) == 1){
         all_stop();
         printf("I just stopped!\n");
-    }
-    else if(checkFirstChars(rx_data, Servo, strlen((const char*)Servo)) == 1){
+
+    }else if(checkFirstChars(rx_data, Servo, strlen((const char*)Servo)) == 1){
         //This should start the servo action. 
         //We should collect the ultrasonic sensor data and transmit it back to the
         //The remote controller
@@ -538,4 +558,5 @@ void motorDriveRecieve (void){
     }else{
 	    return;
     }
+
 }

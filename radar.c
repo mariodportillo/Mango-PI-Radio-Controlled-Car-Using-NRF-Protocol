@@ -1,3 +1,9 @@
+/*
+* CS 107e 
+* Authors:  Sahan Samarakoon and Mario Portillo
+* Date: 17th March 2025
+*/
+
 #include "us.h"
 #include "servo.h"
 #include "gl.h"
