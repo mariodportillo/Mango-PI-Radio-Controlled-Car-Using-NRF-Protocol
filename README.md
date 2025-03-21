@@ -15,7 +15,7 @@ Mario Portillo and Sahan Samarakoon
 <h2><strong>Project description</strong></h2>
 
 
-<h2>Our project offers a radio controlled car that includes two Pis that are transmitting data between each other to process and run commands such as “Forward Speed: 54”. Through heavy use of the nRF24L01 we were able to implement communication between two mango Pis in such a way where 32 bytes of data can be transmitted over radio waves in one payload. This payload can then be processed by a receiver and interpreted to be a command which is exactly how we communicate in our motor_control_from_joystick() function. Our project consisted of a lot of low level and mid level programming to fully setup communication between mango pis and external peripherals such as the joystick, NRF, MCP ADC converter, and motors. </h2>
+<p>Our project offers a radio controlled car that includes two Pis that are transmitting data between each other to process and run commands such as “Forward Speed: 54”. Through heavy use of the nRF24L01 we were able to implement communication between two mango Pis in such a way where 32 bytes of data can be transmitted over radio waves in one payload. This payload can then be processed by a receiver and interpreted to be a command which is exactly how we communicate in our motor_control_from_joystick() function. Our project consisted of a lot of low level and mid level programming to fully setup communication between mango pis and external peripherals such as the joystick, NRF, MCP ADC converter, and motors. </p>
 
 
 <p>
