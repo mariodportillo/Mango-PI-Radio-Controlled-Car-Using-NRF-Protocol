@@ -545,7 +545,7 @@ void motorDriveRecieve (void){
     	speed = grabSpeed(rx_data);
         pwm_set_duty(PWM7, speed);  // Set Motor A speed
         pwm_set_duty(PWM2, speed);  // Set Motor B speed
-        drive_spin_right_time(250);  // spin turn right for 10 ms.
+        drive_spin_right_time(200);  // spin turn right for 10 ms.
         printf("I am going Right, Speed: %d\n", speed);
         return;
 
@@ -553,7 +553,7 @@ void motorDriveRecieve (void){
     	speed = grabSpeed(rx_data);	
         pwm_set_duty(PWM7, speed);  // Set Motor A speed
         pwm_set_duty(PWM2, speed);  // Set Motor B speed
-        drive_spin_left_time(250);   // spin turn left for 10 ms. 
+        drive_spin_left_time(200);   // spin turn left for 10 ms. 
         printf("I am going Left, Speed: %d\n", speed);
         return;
     }else{
