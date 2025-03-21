@@ -12,6 +12,9 @@
  #include "motor.h"
  #include "timer.h"
 #include "radar.h"
+
+#include "servo.h"
+#include "pwm.h"
  
  uint8_t rx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
  uint8_t rx_data[32];
@@ -56,6 +59,13 @@ void test_motor(){
     	motorDriveRecieve();
     }
 }
+void test_servo(){
+    timer_delay_ms(5000);
+	for(int i = 0; i < 5; i++){
+		radar_scan();
+        //servo_set_angle(PWM4, 0);
+	}
+}
 
 void test_receiver_motor(){
      nrf24_set_rx_mode(rx_address, 10);
@@ -87,6 +97,7 @@ void test_receiver_motor(){
      //test_receiver_simple();
      motor_init();
      radarInit();
+	 //test_servo();
      test_motor();
      // test_receiver_motor();
  }
