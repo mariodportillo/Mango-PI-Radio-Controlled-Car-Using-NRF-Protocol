@@ -7,9 +7,15 @@
 #include "font.h"
 #include "strings.h"
 
+static unsigned int totalPix = 0;
+static unsigned int *im = NULL;
 
 void gl_init(int width, int height, gl_mode_t mode) {
     fb_init(width, height, mode);
+    unsigned int totalWidth = fb_get_width(); 
+    unsigned int totalHeight = fb_get_height();
+    totalPix = totalWidth * totalHeight;
+    im = (unsigned int *)fb_get_draw_buffer(); 
 }
 
 int gl_get_width(void) {
@@ -31,6 +37,7 @@ color_t gl_color(uint8_t r, uint8_t g, uint8_t b) {
 
 void gl_swap_buffer(void) {
     fb_swap_buffer();
+    im = (unsigned int *)fb_get_draw_buffer(); 
 }
 
 void gl_draw_pixel(int x, int y, color_t c) {
@@ -57,28 +64,10 @@ void gl_draw_pixel(int x, int y, color_t c) {
 }
 // Should be faster by clearing pixel by pixel but using 1D array instead of 2D
 void gl_clear(color_t c) {
-    unsigned int totalWidth = fb_get_width();
-    unsigned int totalHeight = fb_get_height();
-    unsigned int *im = (unsigned int *)fb_get_draw_buffer();
-    unsigned int totalPix = totalWidth * totalHeight;
-    
     for (int i = 0; i < totalPix; i++) {
         im[i] = c;
     }
 }
-
-//void gl_clear(color_t c) {
-//    unsigned int totalWidth = fb_get_width();
-//    unsigned int totalHeight = fb_get_height();
-//    unsigned int (*im)[totalWidth] = fb_get_draw_buffer();
-
-//    for(int y = 0; y < totalHeight; y++){
-//        for(int x = 0; x < totalWidth; x++){
-//            im[y][x] = c;
-//        }
-//    }
-
-//}
 
 color_t gl_read_pixel(int x, int y) {
     unsigned int per_row = fb_get_width();

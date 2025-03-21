@@ -54,8 +54,7 @@ void console_clear(void) {
     gl_clear(module.bg_color);
     gl_swap_buffer();
     gl_clear(module.bg_color);      // clear the second buffer
-    memset(module.text_grid, ' ', module.ncols * module.nrows);
-    
+    memset(module.text_grid, ' ', module.ncols * module.nrows); 
 }
 
 
