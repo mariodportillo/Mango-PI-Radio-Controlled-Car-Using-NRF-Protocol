@@ -134,15 +134,15 @@ void drive_reverse_time(unsigned long millisecond){
 
 //This will turn in place and both wheels turn in opposite directions. 
 void drive_spin_right_time(unsigned long millisecond){
-    motorA_set_direction(1);
-    motorB_set_direction(0);
+    motorA_set_direction(0);
+    motorB_set_direction(1);
     timer_delay_ms(millisecond);
     all_stop();
 }
 
 void drive_spin_left_time(unsigned long millisecond){
-    motorA_set_direction(0);
-    motorB_set_direction(1);
+    motorA_set_direction(1);
+    motorB_set_direction(0);
     timer_delay_ms(millisecond);
     all_stop();
 
