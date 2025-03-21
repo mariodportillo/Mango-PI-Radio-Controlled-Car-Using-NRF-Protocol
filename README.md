@@ -193,7 +193,7 @@ Overall we had a very good experience building out and debugging both the hardwa
 
 
 <p>
-<a href="https://github.com/cs107e/win25-project-Sahan-Samarakoon-mariodportillo/blob/master/Demo_Day.HEIC">DemoDay.jpg</a>
+<a href="https://github.com/cs107e/win25-project-Sahan-Samarakoon-mariodportillo/blob/master/DemoDay.jpg">DemoDay.jpg</a>
 </p>
 <p>
 <a href="https://github.com/cs107e/win25-project-Sahan-Samarakoon-mariodportillo/blob/master/FinalRobot.jpg">FinalRobot.jpg</a>
