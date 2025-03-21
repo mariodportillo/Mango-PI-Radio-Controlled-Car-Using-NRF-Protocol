@@ -201,3 +201,6 @@ Overall we had a very good experience building out and debugging both the hardwa
 <p>
 <a href="https://github.com/cs107e/win25-project-Sahan-Samarakoon-mariodportillo/blob/master/simple-motor.jpeg">simple-motor.jpeg</a>
 </p>
+<p>
+<a href="https://drive.google.com/drive/folders/1ETHPAlo7URCvq0rznDnEyskCq85lFQmZ?usp=drive_link">Videos</a>
+</p>
