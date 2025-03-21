@@ -16,6 +16,12 @@ void select_mcp3008();
 
 void deselect_all();
 
+/**
+ * 
+ * Given a spi_mode we properly toggle the currect chip select so the data
+ * transfer between mango Pi and external chip is done smoothly and efficiently.
+ * 
+*/
 void spi_transfer_device(uint8_t *tx, uint8_t *rx, int len, spi_mode mode);
 
 #endif

@@ -1,5 +1,8 @@
 /* File: display.c
  * ---------------
+ * CS 107e 
+ * Authors: Sahan Samarakoon and Mario Portillo
+ * Date: 14th March 2025
  * ***** Contains functions borrowed from Sahan's console module *****
  */
 
@@ -57,7 +60,6 @@ void console_clear(void) {
     memset(module.text_grid, ' ', module.ncols * module.nrows); 
 }
 
-
 void console_display(void){
     gl_clear(module.bg_color);
 
@@ -74,6 +76,15 @@ void console_display(void){
     gl_swap_buffer();
 }
 
+
+/**
+ * 
+ * The radar display function will process the first 10 distances passed in by the pointer to the array.
+ * After processing and calculating the distances using sin and cos we display this data on our buffer. 
+ * 
+ * The computation relies on traingle mathematics to determine the dx and dy to properly place the asterics
+ * in the currect area in our buffer.
+*/
 void radar_display(uint8_t *distance_data) {
     // Car is at bottom center
     int car_x = module.ncols / 2;

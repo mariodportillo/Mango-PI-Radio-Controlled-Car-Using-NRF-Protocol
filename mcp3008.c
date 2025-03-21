@@ -2,15 +2,15 @@
 #include "spi_comm.h"
 #include "mcp3008.h"
 #include "spi.h"
+
 // Read ADC from MCP3008 (channel 0)
-
-
 
 void mcp3008_init(void)  {
     spi_init(SPI_MODE_0);
     gpio_set_output(CSN_MCP3008);
 }
 
+//This below code was adopted from Julie's MCP code.
 unsigned int mcp3008_read_channel(int channel) {
     uint8_t tx[3], rx[3];
 

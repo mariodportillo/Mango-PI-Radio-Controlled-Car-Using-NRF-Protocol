@@ -48,22 +48,3 @@ static void print_distance(int inches) {
     buf[inches+1] = '\0';
     printf("%s %d\n", buf, inches);
 }
-
-
-// TODO: uncomment for testing. If uncommented, be sure to remove this file from the Makefile before building
-// void main(void) {
-
-//     timer_init();
-//     gpio_init();
-//     uart_init();
-//   	gpio_set_output(trigger);
-//   	gpio_set_input(echo);
-//   	gpio_set_pulldown(echo);
-
-//     printf("Starting program %s\n\n", __FILE__);
-//   	while (1) {
-// 		int inches = sense_distance();
-//         print_distance(inches);
-//         timer_delay_ms(250);
-// 	}
-// }

@@ -1,4 +1,5 @@
-/*
+/* File: motor.c
+* ---------------
 * CS 107e 
 * Authors: Mario Portillo and Sahan Samarakoon
 * Date: 15th March 2025
@@ -18,8 +19,12 @@
 #include "malloc.h"
 #include "interrupts.h"
 #include "gpio_interrupt.h"
+#include "uart.h"
+#include "mango.h"
 
-
+//Global variables for our tx and rx addresses. 
+static uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
+static uint8_t rx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
 /*
 * These below global variables are necessary for 
 * interruopts to occur and to be tracked by the controller.  
@@ -29,17 +34,28 @@ static volatile int transmit = 0;
 static gpio_id_t killSwitch = KILL_SWITCH;
 static gpio_id_t buttonTransmit = BUTTON;
 
+/*
+* This handler function is initiated when the yellow button is clicked.
+* The yellow button being clicked initiates the transmission of a special
+* kill switch command which stops all motors and then mango reboots the controller.
+* The idea behind this function is it will terminate communication between the controller and
+* the reciever as to not be sending bad values after we send the stop command. 
+*/
 static void button_stop_pressed(void *aux_data) {
     gpio_id_t button = *(gpio_id_t *)aux_data;
     gpio_interrupt_clear(button);
     uart_putstring("STOP!!!\n");
+    
+    // The following code is a very standard and reoccurring set of
+    // instructions used to transmit information using the NRF module. 
     nrf24_init();
-    uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
     nrf24_set_tx_mode(tx_address, 10);
+    // Here we are creating a tx buffer which we will use to transmit data. 
     uint8_t tx_data[32];
+    memset(tx_data, '\0', 32);
 
-    tx_data[0] = '\0'; 
-    strlcat((char *)tx_data, "All Stop", 32);
+    //Use our handy dandy strlcat function to update our buffer. 
+    strlcat((char *)tx_data, "All Stop", 32); 
 
     int i = 0;
     while(i == 0){
@@ -48,9 +64,15 @@ static void button_stop_pressed(void *aux_data) {
             i = 1; 
         }
     }
+    // we reboot the controller because we want to cut off communication between controller and RC car.
     mango_reboot();
 }
-
+/*
+*
+* This handler function below will be called when a button press is initiated.
+* By updating the global value transmit we effectively initiate the servo work flow.
+* 
+*/
 static void button_transmit_pressed(void *aux_data) {
     gpio_id_t button = *(gpio_id_t *)aux_data;
     gpio_interrupt_clear(button);
@@ -58,6 +80,12 @@ static void button_transmit_pressed(void *aux_data) {
     uart_putstring("Transmit servo command.\n");
 }
 
+/*
+*
+* This motor_init funciton handles a lot of the setup required for the interrupts,
+*  pwm, and gpio_pins. 
+* 
+*/
 void motor_init(void) {
     gpio_set_input(buttonTransmit);
     gpio_set_pullup(buttonTransmit);
@@ -106,6 +134,7 @@ static void motorB_set_direction(int dir) {
         gpio_write(IN4_PIN, 1);
     }
 }
+
 // sets all Motors to off. 
 static void all_stop(){
     gpio_write(IN1_PIN, 0);
@@ -114,6 +143,7 @@ static void all_stop(){
     gpio_write(IN4_PIN, 0);
 
 }
+
 // For the below code I am assuming
 // motorA = left wheel
 // motorB = right wheel
@@ -161,7 +191,10 @@ void drive_pivot_spin_left_time(unsigned long millisecond){
     all_stop();
 }
 
-//Below code is from Mario Portillo Printf.c internal 
+/*
+*   Below code is from Mario Portillo Printf.c internal code.
+*/
+
 //This helper function convers a long num to a hexadecimal str 
 static void sixteenBaseNum(unsigned long num, char *outstr){
 
@@ -254,7 +287,11 @@ static const char *decimal_string(long val) {
     return buf;
 }
 
-//End of Mario's Code.
+/*
+*
+* End of Mario's Code.
+*
+*/
 
 // This below function must be continously called in order to work properly
 // i.e a while loop.
@@ -276,19 +313,24 @@ static const char *decimal_string(long val) {
  * Right = right
  * Back = backwards
  * 
- **/
+ *
+ */
 void motor_control_from_joystick(void) {
-    // check for button switch movement
+    // The first thing we want to do is check our interrupt state which is handled by the
+    // the global variable transmit. When we enter this mode this means we are expecting to get some kind of transmission back
+    // in the form of distance values from the RC car Ultra sonic sensor. 
     if(transmit == 1){
+
+        // Reset transmit and setup NRF communication. 
     	transmit = 0;
         nrf24_init();
-        uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
         nrf24_set_tx_mode(tx_address, 10);
         uint8_t tx_data[32];
+        memset(tx_data, '\0', 32);
 
-        tx_data[0] = '\0'; 
         strlcat((char *)tx_data, "Activate Radar Scan", 32);
-	
+        
+        // This kind of while loop will continously loop trying to transmit the NRF command. 
         int i = 0;
         while(i == 0){
             if (nrf24_transmit(tx_data)) {
@@ -299,7 +341,6 @@ void motor_control_from_joystick(void) {
         
         // After we transmit the command we want to then go into a receiver mode to 
         nrf24_init();
-        uint8_t rx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
         nrf24_set_rx_mode(rx_address, 10);
         uint8_t rx_data[32];
         memset(rx_data, '\0', 32);
@@ -307,11 +348,13 @@ void motor_control_from_joystick(void) {
         printf("Waiting for data...\n");
         unsigned long startTime = timer_get_ticks();
         unsigned long endTime = 10000 * 24000; //convert milliseconds to clock ticks 
-
+        
+        // We only want to wait for a maximum of 10 seconds for the message to be recieved back. 
         while(timer_get_ticks() - startTime < endTime){
             if (is_data_available(1)){
                 nrf24_receive(rx_data);
                 printf("Received radar data.\n");
+                break; 
             }
         }
 
@@ -319,7 +362,7 @@ void motor_control_from_joystick(void) {
             printf("No message recieved\n");
             return;
         }
-        
+
         radar_display(rx_data);
         return;
     }
@@ -341,7 +384,7 @@ void motor_control_from_joystick(void) {
     	cur_dir = MOVE_BACKWARD;
 
     }else if (y_value < startingRange - noMotion) {  // Moving backward
-    	speed = ((startingRange - y_value) * 100) / 512;
+    	speed = ((startingRange - y_value) * 100) / 511;
     	cur_dir = MOVE_FORWARD;
 
     }else if (x_value > startingRange + noMotion) {  // Turning right
@@ -349,29 +392,32 @@ void motor_control_from_joystick(void) {
     	cur_dir = TURN_LEFT;
 
     }else if (x_value < startingRange - noMotion) {  // Turning left
-   	    speed = ((startingRange - x_value) * 100) / 512;
+   	    speed = ((startingRange - x_value) * 100) / 511;
     	cur_dir = TURN_RIGHT;
     } else {
 	    speed = 0;  // Neutral position
     }
 
+    // We assume we dont want to move so we do nothing. 
     if(speed == 0){
 	    return; 
     }
-    
+
+    /**
+     * 
+     * This below switch will be the main transmitting feature which will send out the commands
+     * to the reciever. 
+     * 
+    **/
+
     nrf24_init();
-    uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
     nrf24_set_tx_mode(tx_address, 10);
-    
+    uint8_t tx_data[32];
+    memset(tx_data, '\0', 32);
 
     switch(cur_dir){
         case MOVE_FORWARD:{
-            //send a message	
-            uint8_t tx_data[32];
-            tx_data[0] = '\0'; 
-            strlcat((char *)tx_data, "Forward", 32);
-            strlcat((char *)tx_data, " Speed: ", 32);
-            //New string = "Forward Speed: "
+            strlcat((char *)tx_data, "Forward Speed: ", 32);
             const char *dec = decimal_string(speed);
             strlcat((char *)tx_data, dec, 32);
 
@@ -384,12 +430,7 @@ void motor_control_from_joystick(void) {
             break;
         }
         case MOVE_BACKWARD: {
-            //send a message	
-            uint8_t tx_data[32];
-            tx_data[0] = '\0'; 
-            strlcat((char *)tx_data, "Backward", 32);
-            strlcat((char *)tx_data, " Speed: ", 32);
-            //New string = "Forward Speed: "
+            strlcat((char *)tx_data, "Backward Speed: ", 32);
             const char *dec = decimal_string(speed);
             strlcat((char *)tx_data, dec, 32);
 
@@ -402,12 +443,7 @@ void motor_control_from_joystick(void) {
             break;
         }
         case TURN_RIGHT: {
-            //send a message	
-            uint8_t tx_data[32];
-            tx_data[0] = '\0'; 
-            strlcat((char *)tx_data, "Right", 32);
-            strlcat((char *)tx_data, " Speed: ", 32);
-            //New string = "Forward Speed: "
+            strlcat((char *)tx_data, "Right Speed: ", 32);
             const char *dec = decimal_string(speed);
             strlcat((char *)tx_data, dec, 32);
 
@@ -420,12 +456,7 @@ void motor_control_from_joystick(void) {
             break;
         }
         case TURN_LEFT: {
-            //send a message	
-            uint8_t tx_data[32];
-            tx_data[0] = '\0'; 
-            strlcat((char *)tx_data, "Left", 32);
-            strlcat((char *)tx_data, " Speed: ", 32);
-            //New string = "Forward Speed: "
+            strlcat((char *)tx_data, "Left Speed: ", 32);
             const char *dec = decimal_string(speed);
             strlcat((char *)tx_data, dec, 32);
 
@@ -437,21 +468,23 @@ void motor_control_from_joystick(void) {
 
             break;
         }
-        default:
+        default: {
             printf("Invalid cur_dir: %d \n", cur_dir);
             //do nothing -> invalid cur_dir
             return;
+        }
     }
 }
 
-//This helper function simply compares the first couple chars in two buffers and checks them against each other.
+// This helper function simply compares the first couple chars in two buffers and checks them against each other.
+// The reasn why I do not want to use strcmp() is because I only want to compare the first few characters not the entire
+// string like strcmp() does. 
 static int checkFirstChars(const uint8_t* rx_data, const uint8_t* direction, size_t size){
      for(int i = 0; i < size; i++){
-	if(rx_data[i] != direction[i]){
-		return 0;
-	}
+        if(rx_data[i] != direction[i]){
+            return 0;
+        }
      }
-
      return 1; 
 }
 //This helper function goes through an RX buffer and returned the speed from the message.
@@ -459,22 +492,24 @@ static unsigned int grabSpeed(uint8_t* rx_data){
      int max = strlen((const char*)rx_data);
      uint8_t *numPtr = NULL;
      for(int i = 0; i < max; i++){
-	   if(rx_data[i] >= '0' && rx_data[i] <= '9'){
-		numPtr = &rx_data[i];
-		break; 
-	   }
+        if(rx_data[i] >= '0' && rx_data[i] <= '9'){
+		    numPtr = &rx_data[i];
+		    break; 
+        }
      }
+
      return strtonum((char *)numPtr, NULL);
 }
+
 /**
  * motorDriveRecieve: The reciever on the car which will mostly recieve function commands from the other PI
- * using NRF communication to then move the motors on the recievers end. 
+ * using NRF communication to then move the motors on the recievers end will call this function forever in some
+ * kinds of while loop such that it is constantly responding to user inputs froom the controller. 
  * 
  **/
 void motorDriveRecieve (void){
     uint8_t rx_data[32];
-    memset(rx_data, 0x7E, 32);
-    rx_data[31] = '\0';
+    memset(rx_data, '\0', 32);
     
     
     if (is_data_available(1)){
@@ -483,7 +518,8 @@ void motorDriveRecieve (void){
     }else{
 	    return;
     }
-
+    // A list of all the possible commands we could have coming in. These are the only acceptable commands for our
+    // RC car to handle. 
     uint8_t Forward[] = "Forward Speed: ";
     uint8_t Backward[] = "Backward Speed: ";
     uint8_t Right[] = "Right Speed: ";
@@ -502,10 +538,9 @@ void motorDriveRecieve (void){
         //The remote controller
         //The radar function memory allocated memory so it is our responsibility to free it after we are 
         //done with the pointer
-        all_stop();
+        all_stop(); //ensure we are stopped. 
         uint8_t* mDistance = radar_scan(); // -> this fuction should move the servo and return a pointer to distance data.
         nrf24_init();
-        uint8_t tx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
         nrf24_set_tx_mode(tx_address, 10);
         uint8_t tx_servoData[32];
         memcpy(tx_servoData, mDistance, 32);
@@ -519,17 +554,14 @@ void motorDriveRecieve (void){
             //if we fail we want to exit immediatley.
         }
         nrf24_init();
-        uint8_t rx_address[] = {0xEE, 0xDD, 0xCC, 0xBB, 0xAA};
         nrf24_set_rx_mode(rx_address, 10);
         return;
 
     }else if(checkFirstChars(rx_data, Forward, strlen((const char*)Forward)) == 1){
      	speed = grabSpeed(rx_data);
         pwm_set_duty(PWM7, speed);  // Set Motor A speed
-        //pwm_set_freq(PWM7, 10000);
         pwm_set_duty(PWM2, speed);  // Set Motor B speed
-        //pwm_set_freq(PWM2, 10000);
-        drive_forward_time(350);     // drive forward for 10 ms. 
+        drive_forward_time(350);    // drive forward. 
         printf("I am going Forward, Speed: %d\n", speed);
         return;
 
@@ -538,26 +570,27 @@ void motorDriveRecieve (void){
 	    pwm_set_duty(PWM7, speed);  // Set Motor A speed
 	    pwm_set_duty(PWM2, speed);  // Set Motor B speed
 	    printf("I am going Backward, Speed: %d\n", speed);
-	    drive_reverse_time(350);     // drive backward for 10 ms.
+	    drive_reverse_time(350);     // drive backward.
 	    return; 
 
     }else if(checkFirstChars(rx_data, Right, strlen((const char*)Right)) == 1){
     	speed = grabSpeed(rx_data);
-        pwm_set_duty(PWM7, speed);  // Set Motor A speed
-        pwm_set_duty(PWM2, speed);  // Set Motor B speed
-        drive_spin_right_time(200);  // spin turn right for 10 ms.
+        pwm_set_duty(PWM7, speed);   // Set Motor A speed
+        pwm_set_duty(PWM2, speed);   // Set Motor B speed
+        drive_spin_right_time(200);  // spin turn right
         printf("I am going Right, Speed: %d\n", speed);
         return;
 
     }else if(checkFirstChars(rx_data, Left, strlen((const char*)Left)) == 1){
     	speed = grabSpeed(rx_data);	
-        pwm_set_duty(PWM7, speed);  // Set Motor A speed
-        pwm_set_duty(PWM2, speed);  // Set Motor B speed
-        drive_spin_left_time(200);   // spin turn left for 10 ms. 
+        pwm_set_duty(PWM7, speed);   // Set Motor A speed
+        pwm_set_duty(PWM2, speed);   // Set Motor B speed
+        drive_spin_left_time(200);   // spin turn left.
         printf("I am going Left, Speed: %d\n", speed);
         return;
     }else{
-	    return;
+	    //Assume we got a bad code and we simply do nothing and return.
+        return;
     }
 
 }
